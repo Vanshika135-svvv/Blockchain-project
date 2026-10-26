@@ -6,7 +6,6 @@
   <title>Ledger Explorer | EcoChain</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Explorer Scoped Layout Fixes */
     .filter-bar {
       display: flex;
       flex-direction: row;
@@ -15,29 +14,24 @@
       margin-bottom: 1.5rem;
       align-items: center;
     }
-
     .filter-input {
       flex: 1;
       min-width: 0;
     }
-
     .filter-dropdown {
-      width: 220px;
+      width: 250px;
       flex-shrink: 0;
     }
-
     .table-container {
       width: 100%;
       overflow-x: auto;
     }
-
     .ledger-table {
       width: 100%;
       border-collapse: collapse;
       table-layout: fixed;
       font-size: 0.85rem;
     }
-
     .ledger-table th {
       border-bottom: 1px solid var(--border-subtle);
       color: var(--text-muted);
@@ -48,7 +42,6 @@
       padding: 0.85rem 1rem;
       text-align: left;
     }
-
     .ledger-table td {
       padding: 1rem;
       border-bottom: 1px solid rgba(255, 255, 255, 0.04);
@@ -58,15 +51,12 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-
     .ledger-table tr:hover {
       background: rgba(255, 255, 255, 0.02);
     }
-
     .action-cell {
       text-align: right !important;
     }
-
     .btn-verify {
       display: inline-block;
       text-decoration: none;
@@ -80,7 +70,6 @@
       transition: all 0.2s ease;
       white-space: nowrap;
     }
-
     .btn-verify:hover {
       background: rgba(16, 185, 129, 0.25);
     }
@@ -164,32 +153,48 @@
   </div>
 
   <script>
+    let allItemsCache = [];
+
     async function loadAdminData() {
       const q = document.getElementById('filterQuery').value.trim();
-      const status = document.getElementById('filterStatus').value;
+      const statusSelect = document.getElementById('filterStatus');
+      const selectedStatus = statusSelect.value;
 
       try {
-        const res = await fetch(`http://127.0.0.1:5000/api/ewaste/search?q=${encodeURIComponent(q)}&status=${encodeURIComponent(status)}`);
+        // Fetch all items to keep metrics and dropdown badges accurate
+        const fullRes = await fetch('http://127.0.0.1:5000/api/ewaste/all');
+        const fullData = await fullRes.json();
+        
+        if (fullData.success) {
+          allItemsCache = fullData.items;
+          updateFilterBadges(allItemsCache, selectedStatus);
+
+          document.getElementById('totalCount').innerText = allItemsCache.length;
+          let weightSum = 0;
+          let recycledCount = 0;
+          allItemsCache.forEach(item => {
+            weightSum += Number(item.weight || 0);
+            if (item.status === 'RECYCLED') recycledCount++;
+          });
+          document.getElementById('totalWeight').innerText = weightSum.toFixed(1) + " kg";
+          document.getElementById('totalRecycled').innerText = recycledCount;
+        }
+
+        // Now fetch filtered results for the table
+        const res = await fetch(`http://127.0.0.1:5000/api/ewaste/search?q=${encodeURIComponent(q)}&status=${encodeURIComponent(selectedStatus)}`);
         const data = await res.json();
         if(!data.success) return;
 
         const items = data.items;
-        document.getElementById('totalCount').innerText = items.length;
-
-        let weightSum = 0;
-        let recycledCount = 0;
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = "";
 
         if(items.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No matching assets found.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No matching assets found for this filter.</td></tr>`;
           return;
         }
 
         items.forEach(item => {
-          weightSum += Number(item.weight || 0);
-          if(item.status === 'RECYCLED') recycledCount++;
-
           const tr = document.createElement('tr');
           const statusKey = item.status.toLowerCase().replace(/\s+/g, '');
 
@@ -206,14 +211,29 @@
           tbody.appendChild(tr);
         });
 
-        document.getElementById('totalWeight').innerText = weightSum.toFixed(1) + " kg";
-        document.getElementById('totalRecycled').innerText = recycledCount;
       } catch(err) {
         console.error("Ledger fetch error:", err);
       }
     }
 
-    // Initial load
+    function updateFilterBadges(items, currentVal) {
+      const counts = { ALL: items.length, REGISTERED: 0, COLLECTED: 0, "IN TRANSIT": 0, RECEIVED: 0, RECYCLED: 0 };
+      items.forEach(i => {
+        if (counts[i.status] !== undefined) counts[i.status]++;
+      });
+
+      const select = document.getElementById('filterStatus');
+      select.innerHTML = `
+        <option value="ALL" ${currentVal === 'ALL' ? 'selected' : ''}>All Statuses (${counts.ALL})</option>
+        <option value="REGISTERED" ${currentVal === 'REGISTERED' ? 'selected' : ''}>Registered (${counts.REGISTERED})</option>
+        <option value="COLLECTED" ${currentVal === 'COLLECTED' ? 'selected' : ''}>Collected (${counts.COLLECTED})</option>
+        <option value="IN TRANSIT" ${currentVal === 'IN TRANSIT' ? 'selected' : ''}>In Transit (${counts["IN TRANSIT"]})</option>
+        <option value="RECEIVED" ${currentVal === 'RECEIVED' ? 'selected' : ''}>Received (${counts.RECEIVED})</option>
+        <option value="RECYCLED" ${currentVal === 'RECYCLED' ? 'selected' : ''}>Recycled (${counts.RECYCLED})</option>
+      `;
+    }
+
+    // Initial Load
     loadAdminData();
   </script>
 </body>
