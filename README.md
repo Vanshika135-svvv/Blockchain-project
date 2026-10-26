@@ -58,19 +58,24 @@ cd frontend
 python -m http.server 5500
 Open http://127.0.0.1:5500/index.html in your web browser.
 ```
-##🔄 End-to-End Workflow Execution
-User Registration (user.html): Log device parameters (e.g., Laptop, 2.4 kg) to invoke registerEWaste(), mine the genesis block receipt, and obtain the cryptographic QR verification badge.
-Collection Center (collection.html): Query the asset ID to verify hardware specs, assume custody (COLLECTED), and seal the courier batch (IN TRANSIT).
-Recycler Facility (recycler.html): Acknowledge dock arrival (RECEIVED), input post-shredding raw material mass (Copper, Plastic, Precious metals), and invoke completeRecycling() to finalize state as RECYCLED.
-Lifecycle Audit Timeline (track.html?id=EW-...): Publicly verify the completed 5-stage progress indicator alongside raw mined Ethereum block transaction hashes.
-Ledger Explorer (admin.html): Monitor protocol-wide inventory metrics, recovered mass, and filter live assets by custody status.
-##🎓 Academic Attribution
-Institution: Shri Vaishnav Vidyapeeth Vishwavidyalaya, Indore
-Institute: Shri Vaishnav Institute of Information Technology
-Department: Computer Science & Engineering / Artificial Intelligence & Data Science
-Faculty Guide: Mr. Rohit Choubey
-Project Team:
-- Vanshika Tiwari (23100BTCSAII14332)
-- Harman Kaur (23100BTCSAII14286)
-- Dhanshri Patil (23100BTCSAII14282)
-- Vaidika Laddha (23100BTCSAII14329)
+## 🔄 End-to-End Workflow Execution
+
+1. **User Registration (`user.html`):** Log device parameters (e.g., Laptop, 2.4 kg) to invoke `registerEWaste()`, mine the genesis block receipt, and obtain the cryptographic QR verification badge.
+2. **Collection Center (`collection.html`):** Query the asset ID to verify hardware specs, assume custody (`COLLECTED`), and seal the courier batch (`IN TRANSIT`).
+3. **Recycler Facility (`recycler.html`):** Acknowledge dock arrival (`RECEIVED`), input post-shredding raw material mass (Copper, Plastic, Precious metals), and invoke `completeRecycling()` to finalize state as `RECYCLED`.
+4. **Lifecycle Audit Timeline (`track.html?id=EW-...`):** Publicly verify the completed 5-stage progress indicator alongside raw mined Ethereum block transaction hashes.
+5. **Ledger Explorer (`admin.html`):** Monitor protocol-wide inventory metrics, recovered mass, and filter live assets by custody status.
+
+---
+
+## 🎓 Academic Attribution
+
+- **Institution:** Shri Vaishnav Vidyapeeth Vishwavidyalaya, Indore
+- **Institute:** Shri Vaishnav Institute of Information Technology
+- **Department:** Computer Science & Engineering / Artificial Intelligence & Data Science
+- **Faculty Guide:** Mr. Rohit Choubey
+- **Project Team:**
+  - Vanshika Tiwari 
+  - Harman Kaur
+  - Dhanshri Patil 
+  - Vaidika Laddha 
