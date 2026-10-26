@@ -162,8 +162,7 @@
 
       try {
         // Fetch all items to keep metrics and dropdown badges accurate
-        const fullRes = await fetch('http://127.0.0.1:5000/api/ewaste/all');
-        const fullData = await fullRes.json();
+const fullRes = await fetch(`${API_BASE_URL}/api/ewaste/all`);        const fullData = await fullRes.json();
         
         if (fullData.success) {
           allItemsCache = fullData.items;
@@ -181,8 +180,7 @@
         }
 
         // Now fetch filtered results for the table
-        const res = await fetch(`http://127.0.0.1:5000/api/ewaste/search?q=${encodeURIComponent(q)}&status=${encodeURIComponent(selectedStatus)}`);
-        const data = await res.json();
+const res = await fetch(`${API_BASE_URL}/api/ewaste/search?q=${encodeURIComponent(q)}&status=${encodeURIComponent(selectedStatus)}`);        const data = await res.json();
         if(!data.success) return;
 
         const items = data.items;

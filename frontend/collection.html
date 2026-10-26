@@ -89,7 +89,7 @@
 
       const card = document.getElementById('lookupCard');
       try {
-        const res = await fetch(`http://127.0.0.1:5000/api/ewaste/${id}`);
+        const res = await fetch(`${API_BASE_URL}/api/ewaste/${id}`);
         const data = await res.json();
         if(data.success) {
           card.style.display = 'block';
@@ -121,8 +121,7 @@
       resDiv.innerText = `Broadcasting state change to '${newStatus}' to Ethereum network...`;
 
       try {
-        const res = await fetch('http://127.0.0.1:5000/api/ewaste/update', {
-          method: 'POST',
+const res = await fetch(`${API_BASE_URL}/api/ewaste/update`, {          method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ ewasteId: id, status: newStatus })
         });

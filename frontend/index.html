@@ -396,7 +396,7 @@
 
     async function loadHomepageData() {
       try {
-        const res = await fetch('http://127.0.0.1:5000/api/ewaste/all');
+        const res = await fetch(`${API_BASE_URL}/api/ewaste/all`);
         const data = await res.json();
         if(!data.success) return;
 
