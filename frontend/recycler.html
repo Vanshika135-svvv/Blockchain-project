@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recycler Facility | EcoChain</title>
+  <title>Recycler Facility | EcoChain Protocol</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,61 +13,142 @@
       EcoChain Protocol
     </a>
     <div class="nav-links">
-      <a href="user.html" class="nav-link-btn">User Portal</a>
+      <a href="user.html" class="nav-link-btn">User Intake</a>
       <a href="collection.html" class="nav-link-btn">Collection Hub</a>
       <a href="recycler.html" class="nav-link-btn active">Recycler Facility</a>
       <a href="admin.html" class="nav-link-btn">Ledger Explorer</a>
     </div>
   </nav>
 
-  <div class="bento-container" style="max-width: 650px;">
+  <div class="bento-container" style="max-width: 850px;">
     <div class="bento-card">
-      <span class="form-label-custom">Material Reclamation</span>
-      <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem;">Recycling Facility Certification</h2>
-      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Acknowledge warehouse receipt and certify material recovery on the blockchain.</p>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem;">
+        <div>
+          <span class="form-label-custom">Material Recovery & Destruction</span>
+          <h1 style="font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em;">Authorized Recycling Station</h1>
+        </div>
+        <span class="mono-tag">Role: Certified Processor</span>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+        Authenticate device arrival, report secondary raw material yields, and execute final smart contract closure.
+      </p>
 
-      <div style="margin-bottom: 1.25rem;">
-        <label class="form-label-custom">Target E-Waste ID</label>
-        <input type="text" id="targetId" class="form-control-custom" placeholder="e.g. EW-1793029669">
+      <!-- Asset Input -->
+      <div style="margin-bottom: 1.5rem;">
+        <label class="form-label-custom">Target Asset Identifier</label>
+        <div style="display: flex; gap: 0.75rem;">
+          <input type="text" id="targetId" class="form-control-custom" placeholder="e.g. EW-1793029669">
+          <button class="btn-bento-action btn-action-blue" onclick="acknowledgeReceipt()" style="white-space: nowrap;">
+            Acknowledge Arrival (RECEIVED)
+          </button>
+        </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-        <button class="btn-bento-action btn-action-blue" onclick="updateStatus('RECEIVED')">Acknowledge RECEIVED</button>
-        <button class="btn-bento-action btn-action-green" onclick="updateStatus('RECYCLED')">Certify RECYCLED ✓</button>
+      <!-- Material Yield Formulation Bento Sub-Card -->
+      <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <span class="form-label-custom" style="color: var(--accent-green); margin-bottom: 0;">Certified Secondary Raw Material Recovery</span>
+          <small style="color: var(--text-muted); font-size: 0.75rem;">Weights derived from post-shredder sorting</small>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+          <div>
+            <label class="form-label-custom">Copper & Heavy Metals (g)</label>
+            <input type="number" id="matCopper" class="form-control-custom" placeholder="e.g. 240">
+          </div>
+          <div>
+            <label class="form-label-custom">Polymer Plastic (g)</label>
+            <input type="number" id="matPlastic" class="form-control-custom" placeholder="e.g. 1200">
+          </div>
+          <div>
+            <label class="form-label-custom">Precious Metals / Gold (mg)</label>
+            <input type="number" id="matPrecious" class="form-control-custom" placeholder="e.g. 45">
+          </div>
+        </div>
       </div>
 
-      <div id="statusRes" style="display: none; padding: 1rem; border-radius: 10px; font-size: 0.85rem; margin-top: 1rem;"></div>
+      <!-- Execution Button -->
+      <button class="btn-bento-action btn-action-green" onclick="finalizeRecycling()" style="width: 100%; padding: 1rem; font-size: 1rem;">
+        Certify RECYCLED & Seal Cryptographic Chain ✓
+      </button>
+
+      <!-- Results Card -->
+      <div id="statusRes" style="display: none; padding: 1.25rem; border-radius: 10px; font-size: 0.85rem; margin-top: 1.25rem;"></div>
     </div>
   </div>
 
   <script>
-    async function updateStatus(newStatus) {
+    async function acknowledgeReceipt() {
       const id = document.getElementById('targetId').value.trim();
-      if(!id) return alert("Please specify an E-Waste ID");
+      if(!id) return alert("Please specify an Asset ID");
 
       const resDiv = document.getElementById('statusRes');
       resDiv.style.display = "block";
-      resDiv.style.background = "rgba(255,255,255,0.05)";
+      resDiv.style.background = "rgba(255,255,255,0.03)";
       resDiv.style.color = "var(--text-main)";
-      resDiv.innerText = `Submitting proof of '${newStatus}' to Ethereum...`;
+      resDiv.innerText = "Broadcasting 'RECEIVED' event to blockchain...";
 
       try {
         const res = await fetch('http://127.0.0.1:5000/api/ewaste/update', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ ewasteId: id, status: newStatus })
+          body: JSON.stringify({ ewasteId: id, status: "RECEIVED" })
+        });
+        const data = await res.json();
+        if(data.success) {
+          resDiv.style.background = "rgba(56, 189, 248, 0.15)";
+          resDiv.style.color = "var(--accent-blue)";
+          resDiv.innerHTML = `
+            <strong>Receipt Mined:</strong> Asset status updated to <b>RECEIVED</b>.<br>
+            <span class="mono-tag" style="margin-top:0.4rem; display:inline-block;">Tx: ${data.txHash}</span>
+          `;
+        } else {
+          resDiv.style.color = "#f87171";
+          resDiv.innerText = "Error: " + data.error;
+        }
+      } catch (e) {
+        resDiv.innerText = "Connection failed. Make sure app.py is running.";
+      }
+    }
+
+    async function finalizeRecycling() {
+      const id = document.getElementById('targetId').value.trim();
+      if(!id) return alert("Please specify an Asset ID");
+
+      const resDiv = document.getElementById('statusRes');
+      resDiv.style.display = "block";
+      resDiv.style.background = "rgba(255,255,255,0.03)";
+      resDiv.style.color = "var(--text-main)";
+      resDiv.innerText = "Submitting physical recovery proof & final smart contract seal...";
+
+      const materials = {
+        copper_g: Number(document.getElementById('matCopper').value) || 0,
+        plastic_g: Number(document.getElementById('matPlastic').value) || 0,
+        precious_mg: Number(document.getElementById('matPrecious').value) || 0
+      };
+
+      try {
+        const res = await fetch('http://127.0.0.1:5000/api/ewaste/recycle-breakdown', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ ewasteId: id, materials })
         });
         const data = await res.json();
         if(data.success) {
           resDiv.style.background = "rgba(16, 185, 129, 0.15)";
           resDiv.style.color = "var(--accent-green)";
-          resDiv.innerHTML = `<strong>Success:</strong> State updated to <b>${newStatus}</b><br><span style='font-family: var(--font-mono); font-size: 0.72rem;'>Tx: ${data.txHash}</span>`;
+          resDiv.innerHTML = `
+            <strong>Lifecycle Finalized:</strong> Asset certified as <b>RECYCLED</b> on-chain.<br>
+            <span class="mono-tag" style="margin-top:0.4rem; display:inline-block;">Tx: ${data.txHash}</span>
+            <div style="margin-top: 0.75rem;">
+              <a href="track.html?id=${id}" target="_blank" class="btn-verify">Inspect Final Verification Certificate &rarr;</a>
+            </div>
+          `;
         } else {
-          resDiv.style.background = "rgba(239, 68, 68, 0.15)";
           resDiv.style.color = "#f87171";
           resDiv.innerText = "Error: " + data.error;
         }
-      } catch(e) {
+      } catch (e) {
         resDiv.innerText = "Connection failed. Make sure app.py is running.";
       }
     }

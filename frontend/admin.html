@@ -5,6 +5,86 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ledger Explorer | EcoChain</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* Explorer Scoped Layout Fixes */
+    .filter-bar {
+      display: flex;
+      flex-direction: row;
+      gap: 1rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+      align-items: center;
+    }
+
+    .filter-input {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .filter-dropdown {
+      width: 220px;
+      flex-shrink: 0;
+    }
+
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .ledger-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 0.85rem;
+    }
+
+    .ledger-table th {
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      padding: 0.85rem 1rem;
+      text-align: left;
+    }
+
+    .ledger-table td {
+      padding: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      vertical-align: middle;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ledger-table tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .action-cell {
+      text-align: right !important;
+    }
+
+    .btn-verify {
+      display: inline-block;
+      text-decoration: none;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.4rem 0.85rem;
+      border-radius: 8px;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-verify:hover {
+      background: rgba(16, 185, 129, 0.25);
+    }
+  </style>
 </head>
 <body>
   <nav class="navbar-custom">
@@ -13,7 +93,7 @@
       EcoChain Protocol
     </a>
     <div class="nav-links">
-      <a href="user.html" class="nav-link-btn">User Portal</a>
+      <a href="user.html" class="nav-link-btn">User Intake</a>
       <a href="collection.html" class="nav-link-btn">Collection Hub</a>
       <a href="recycler.html" class="nav-link-btn">Recycler Facility</a>
       <a href="admin.html" class="nav-link-btn active">Ledger Explorer</a>
@@ -21,12 +101,17 @@
   </nav>
 
   <div class="bento-container">
-    <div style="margin-bottom: 2rem;">
-      <h1 style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em;">Protocol Ledger Analytics</h1>
-      <p style="color: var(--text-muted); font-size: 0.95rem;">Real-time on-chain verifiable audit metrics.</p>
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+      <div>
+        <h1 style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.25rem;">Protocol Ledger Analytics</h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Real-time on-chain verifiable audit metrics & custody tracking.</p>
+      </div>
+      <div>
+        <button class="btn-bento-action btn-action-blue" onclick="loadAdminData()" style="padding: 0.6rem 1.1rem; font-size: 0.85rem;">Refresh Ledger ↻</button>
+      </div>
     </div>
 
-    <!-- Bento Metrics Row -->
+    <!-- Bento Top Metrics -->
     <div class="bento-grid" style="margin-bottom: 1.5rem;">
       <div class="bento-card" style="grid-column: span 4;">
         <span class="form-label-custom">Total Registered Assets</span>
@@ -42,19 +127,34 @@
       </div>
     </div>
 
-    <!-- Ledger Table Bento -->
+    <!-- Registry & Search Bento -->
     <div class="bento-card">
-      <span class="form-label-custom" style="margin-bottom: 1rem;">Complete Registry</span>
-      <div style="overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+      <div class="filter-bar">
+        <div class="filter-input">
+          <input type="text" id="filterQuery" class="form-control-custom" placeholder="Search by ID, owner, or device category..." oninput="loadAdminData()">
+        </div>
+        <div class="filter-dropdown">
+          <select id="filterStatus" class="form-select-custom" onchange="loadAdminData()">
+            <option value="ALL" selected>All Statuses</option>
+            <option value="REGISTERED">Registered</option>
+            <option value="COLLECTED">Collected</option>
+            <option value="IN TRANSIT">In Transit</option>
+            <option value="RECEIVED">Received</option>
+            <option value="RECYCLED">Recycled</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="ledger-table">
           <thead>
-            <tr style="border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); text-transform: uppercase; font-size: 0.72rem;">
-              <th style="padding: 0.75rem 1rem;">Asset ID</th>
-              <th style="padding: 0.75rem 1rem;">Owner</th>
-              <th style="padding: 0.75rem 1rem;">Device</th>
-              <th style="padding: 0.75rem 1rem;">Weight</th>
-              <th style="padding: 0.75rem 1rem;">Status</th>
-              <th style="padding: 0.75rem 1rem; text-align: right;">Action</th>
+            <tr>
+              <th style="width: 22%;">Asset ID</th>
+              <th style="width: 20%;">Owner</th>
+              <th style="width: 18%;">Device</th>
+              <th style="width: 12%;">Weight</th>
+              <th style="width: 16%;">Status</th>
+              <th style="width: 12%; text-align: right;">Action</th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
@@ -65,8 +165,11 @@
 
   <script>
     async function loadAdminData() {
+      const q = document.getElementById('filterQuery').value.trim();
+      const status = document.getElementById('filterStatus').value;
+
       try {
-        const res = await fetch('http://127.0.0.1:5000/api/ewaste/all');
+        const res = await fetch(`http://127.0.0.1:5000/api/ewaste/search?q=${encodeURIComponent(q)}&status=${encodeURIComponent(status)}`);
         const data = await res.json();
         if(!data.success) return;
 
@@ -78,19 +181,27 @@
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = "";
 
+        if(items.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No matching assets found.</td></tr>`;
+          return;
+        }
+
         items.forEach(item => {
           weightSum += Number(item.weight || 0);
           if(item.status === 'RECYCLED') recycledCount++;
 
           const tr = document.createElement('tr');
-          tr.style.borderBottom = "1px solid rgba(255, 255, 255, 0.04)";
+          const statusKey = item.status.toLowerCase().replace(/\s+/g, '');
+
           tr.innerHTML = `
-            <td style="padding: 1rem;"><span class="mono-tag">${item.ewasteId}</span></td>
-            <td style="padding: 1rem; font-weight: 500;">${item.ownerName}</td>
-            <td style="padding: 1rem;">${item.deviceType}</td>
-            <td style="padding: 1rem;">${item.weight} kg</td>
-            <td style="padding: 1rem;"><span class="status-badge ${item.status.toLowerCase().replace(" ", "")}">${item.status}</span></td>
-            <td style="padding: 1rem; text-align: right;"><a href="track.html?id=${item.ewasteId}" target="_blank" class="btn-bento-action btn-action-green" style="text-decoration: none; font-size: 0.75rem; padding: 0.35rem 0.75rem;">Verify</a></td>
+            <td><span class="mono-tag">${item.ewasteId}</span></td>
+            <td style="font-weight: 500;">${item.ownerName}</td>
+            <td>${item.deviceType}</td>
+            <td>${item.weight} kg</td>
+            <td><span class="status-badge ${statusKey}">${item.status}</span></td>
+            <td class="action-cell">
+              <a href="track.html?id=${item.ewasteId}" target="_blank" class="btn-verify">Verify Audit &rarr;</a>
+            </td>
           `;
           tbody.appendChild(tr);
         });
@@ -98,10 +209,11 @@
         document.getElementById('totalWeight').innerText = weightSum.toFixed(1) + " kg";
         document.getElementById('totalRecycled').innerText = recycledCount;
       } catch(err) {
-        console.error(err);
+        console.error("Ledger fetch error:", err);
       }
     }
 
+    // Initial load
     loadAdminData();
   </script>
 </body>

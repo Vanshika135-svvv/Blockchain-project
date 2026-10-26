@@ -1,14 +1,16 @@
+import base64
+import datetime
+from io import BytesIO
 import os
+import time
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from pymongo import MongoClient
-from web3 import Web3
 import qrcode
-import base64
-from io import BytesIO
-import time
-import datetime
+from web3 import Web3
+from werkzeug.security import generate_password_hash, check_password_hash
+import secrets
 
 # Load environment variables from .env file
 load_dotenv()
@@ -22,7 +24,7 @@ client = MongoClient(MONGO_URI)
 db = client["ecochain"]
 ewaste_collection = db["ewaste"]
 
-# 2. Blockchain Setup
+# 2. Blockchain Setup (Connecting to Hardhat node on port 8545)
 w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545"))
 default_account = w3.eth.accounts[0]
 w3.eth.default_account = default_account
@@ -164,8 +166,10 @@ contract_abi = [
 
 contract = w3.eth.contract(address=contract_address, abi=contract_abi)
 
+
 # ---------------- API ROUTES ----------------
 
+# 1. Register new e-waste item
 @app.route('/api/ewaste/register', methods=['POST'])
 def register_ewaste():
     try:
@@ -180,7 +184,7 @@ def register_ewaste():
         receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
         blockchain_hash = receipt.transactionHash.hex()
 
-        # QR code pointing to tracking timeline
+        # QR code pointing to tracking timeline on port 5500
         qr_url = f"http://127.0.0.1:5500/track.html?id={ewaste_id}"
         qr = qrcode.make(qr_url)
         buffered = BytesIO()
@@ -211,6 +215,7 @@ def register_ewaste():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+# 2. Update status across standard lifecycle stages
 @app.route('/api/ewaste/update', methods=['POST'])
 def update_ewaste():
     try:
@@ -252,6 +257,7 @@ def update_ewaste():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+# 3. Retrieve item details for track.html timeline
 @app.route('/api/ewaste/<ewaste_id>', methods=['GET'])
 def get_ewaste_details(ewaste_id):
     try:
@@ -265,6 +271,7 @@ def get_ewaste_details(ewaste_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+# 4. Fetch all records for admin metrics
 @app.route('/api/ewaste/all', methods=['GET'])
 def get_all_ewaste():
     try:
@@ -275,6 +282,139 @@ def get_all_ewaste():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+
+# 5. Search & Filter endpoint for Explorer dashboard
+@app.route('/api/ewaste/search', methods=['GET'])
+def search_ewaste():
+    try:
+        query = request.args.get('q', '').strip()
+        status_filter = request.args.get('status', '').strip()
+
+        filter_dict = {}
+        if query:
+            filter_dict["$or"] = [
+                {"ewasteId": {"$regex": query, "$options": "i"}},
+                {"ownerName": {"$regex": query, "$options": "i"}},
+                {"deviceType": {"$regex": query, "$options": "i"}}
+            ]
+        if status_filter and status_filter != 'ALL':
+            filter_dict["status"] = status_filter
+
+        items = list(ewaste_collection.find(filter_dict))
+        for doc in items:
+            doc['_id'] = str(doc['_id'])
+        return jsonify({"success": True, "items": items}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# 6. Recycler Material Breakdown Logger
+@app.route('/api/ewaste/recycle-breakdown', methods=['POST'])
+def log_recycling_breakdown():
+    try:
+        data = request.json
+        ewaste_id = data.get('ewasteId')
+        recovered_materials = data.get('materials', {})
+
+        # Trigger smart contract completion on Ethereum
+        tx_hash = contract.functions.completeRecycling(ewaste_id).transact()
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+        blockchain_hash = receipt.transactionHash.hex()
+
+        # Update MongoDB with physical recovery yields
+        ewaste_collection.update_one(
+            {"ewasteId": ewaste_id},
+            {
+                "$set": {
+                    "status": "RECYCLED",
+                    "recoveredMaterials": recovered_materials
+                },
+                "$push": {
+                    "transactionHashes": {
+                        "status": "RECYCLED",
+                        "hash": blockchain_hash,
+                        "handler": default_account,
+                        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }
+                }
+            }
+        )
+        return jsonify({"success": True, "txHash": blockchain_hash, "materials": recovered_materials}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+# Setup users collection in MongoDB
+users_collection = db["users"]
+
+# 7. Authentication: Sign Up
+@app.route('/api/auth/register', methods=['POST'])
+def auth_register():
+    try:
+        data = request.json
+        name = data.get('name', '').strip()
+        email = data.get('email', '').strip().lower()
+        password = data.get('password', '')
+
+        if not name or not email or not password:
+            return jsonify({"success": False, "error": "All fields are required"}), 400
+
+        if users_collection.find_one({"email": email}):
+            return jsonify({"success": False, "error": "An account with this email already exists"}), 400
+
+        user_doc = {
+            "name": name,
+            "email": email,
+            "passwordHash": generate_password_hash(password),
+            "createdAt": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        res = users_collection.insert_one(user_doc)
+        token = secrets.token_hex(24)
+
+        return jsonify({
+            "success": True,
+            "token": token,
+            "user": {"name": name, "email": email}
+        }), 201
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# 8. Authentication: Log In
+@app.route('/api/auth/login', methods=['POST'])
+def auth_login():
+    try:
+        data = request.json
+        email = data.get('email', '').strip().lower()
+        password = data.get('password', '')
+
+        user = users_collection.find_one({"email": email})
+        if not user or not check_password_hash(user['passwordHash'], password):
+            return jsonify({"success": False, "error": "Invalid email or password"}), 401
+
+        token = secrets.token_hex(24)
+        return jsonify({
+            "success": True,
+            "token": token,
+            "user": {"name": user['name'], "email": user['email']}
+        }), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# 9. User Dashboard Data: Get submissions by user
+@app.route('/api/user/my-items', methods=['GET'])
+def get_user_items():
+    try:
+        owner_name = request.args.get('owner', '').strip()
+        if not owner_name:
+            return jsonify({"success": False, "error": "Owner name is required"}), 400
+
+        # Case-insensitive match on ownerName
+        items = list(ewaste_collection.find({"ownerName": {"$regex": f"^{owner_name}$", "$options": "i"}}))
+        for doc in items:
+            doc['_id'] = str(doc['_id'])
+        return jsonify({"success": True, "items": items}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)

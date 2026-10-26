@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Dashboard | EcoChain Protocol</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .user-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .user-table th {
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      padding: 0.85rem 1rem;
+      text-align: left;
+    }
+    .user-table td {
+      padding: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar-custom">
+    <a href="index.html" class="brand-title">
+      <span class="brand-dot"></span>
+      EcoChain Protocol
+    </a>
+    <div class="nav-links">
+      <a href="user.html" class="nav-link-btn">+ Submit Device</a>
+      <a href="user-dashboard.html" class="nav-link-btn active">My Dashboard</a>
+      <a href="admin.html" class="nav-link-btn">Public Explorer</a>
+      <button onclick="logout()" class="nav-link-btn" style="border: none; background: transparent; cursor: pointer; color: #ef4444;">Sign Out</button>
+    </div>
+  </nav>
+
+  <div class="bento-container">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+      <div>
+        <span class="form-label-custom">Verified Citizen Profile</span>
+        <h1 id="welcomeUser" style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em;">Welcome back</h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Monitor your personal e-waste contributions and on-chain certificates.</p>
+      </div>
+      <div>
+        <a href="user.html" class="btn-bento-action btn-action-green" style="text-decoration: none; padding: 0.75rem 1.25rem;">+ Register New Device</a>
+      </div>
+    </div>
+
+    <!-- User Impact Bento Cards -->
+    <div class="bento-grid" style="margin-bottom: 1.5rem;">
+      <div class="bento-card" style="grid-column: span 4;">
+        <span class="form-label-custom">My Registered Devices</span>
+        <h2 id="myItemsCount" style="font-size: 2.25rem; font-weight: 800; margin-top: 0.5rem;">0</h2>
+      </div>
+      <div class="bento-card" style="grid-column: span 4;">
+        <span class="form-label-custom">Total Mass Diverted</span>
+        <h2 id="myTotalWeight" style="font-size: 2.25rem; font-weight: 800; color: var(--accent-green); margin-top: 0.5rem;">0.0 kg</h2>
+      </div>
+      <div class="bento-card" style="grid-column: span 4;">
+        <span class="form-label-custom">Estimated CO₂ Avoided</span>
+        <h2 id="myCarbonSaved" style="font-size: 2.25rem; font-weight: 800; color: var(--accent-blue); margin-top: 0.5rem;">0.0 kg</h2>
+      </div>
+    </div>
+
+    <!-- Submissions Table Card -->
+    <div class="bento-card">
+      <span class="form-label-custom" style="margin-bottom: 1rem;">My E-Waste Audit Trail</span>
+      <div style="overflow-x: auto;">
+        <table class="user-table">
+          <thead>
+            <tr>
+              <th style="width: 25%;">Asset ID</th>
+              <th style="width: 25%;">Device Category</th>
+              <th style="width: 15%;">Weight</th>
+              <th style="width: 20%;">Current State</th>
+              <th style="width: 15%; text-align: right;">Verification</th>
+            </tr>
+          </thead>
+          <tbody id="userTableBody">
+            <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading your assets...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const userStr = localStorage.getItem('ecochain_user');
+    if (!userStr) {
+      window.location.href = 'auth.html';
+    }
+
+    const currentUser = JSON.parse(userStr);
+    document.getElementById('welcomeUser').innerText = `Welcome, ${currentUser.name}`;
+
+    function logout() {
+      localStorage.removeItem('ecochain_user');
+      localStorage.removeItem('ecochain_token');
+      window.location.href = 'auth.html';
+    }
+
+    async function loadUserData() {
+      try {
+        const res = await fetch(`http://127.0.0.1:5000/api/user/my-items?owner=${encodeURIComponent(currentUser.name)}`);
+        const data = await res.json();
+        if(!data.success) return;
+
+        const items = data.items;
+        document.getElementById('myItemsCount').innerText = items.length;
+
+        let totalW = 0;
+        const tbody = document.getElementById('userTableBody');
+        tbody.innerHTML = "";
+
+        if(items.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No items registered under ${currentUser.name} yet. <a href="user.html" style="color: var(--accent-green);">Register an item</a></td></tr>`;
+          return;
+        }
+
+        items.forEach(item => {
+          const w = Number(item.weight || 0);
+          totalW += w;
+          const statusClass = item.status.toLowerCase().replace(/\s+/g, '');
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><span class="mono-tag">${item.ewasteId}</span></td>
+            <td style="font-weight: 500;">${item.deviceType}</td>
+            <td>${item.weight} kg</td>
+            <td><span class="status-badge ${statusClass}">${item.status}</span></td>
+            <td style="text-align: right;">
+              <a href="track.html?id=${item.ewasteId}" target="_blank" class="btn-verify">Timeline &rarr;</a>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        document.getElementById('myTotalWeight').innerText = `${totalW.toFixed(1)} kg`;
+        document.getElementById('myCarbonSaved').innerText = `${(totalW * 1.44).toFixed(1)} kg`;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    loadUserData();
+  </script>
+</body>
+</html>

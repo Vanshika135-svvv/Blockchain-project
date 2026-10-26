@@ -6,39 +6,21 @@
   <title>Lifecycle Verification | EcoChain</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    .timeline-step {
-      flex: 1;
-      text-align: center;
-      position: relative;
-    }
+    .timeline-step { flex: 1; text-align: center; position: relative; }
     .timeline-dot {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid var(--border-subtle);
-      margin: 0 auto 0.5rem auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--text-muted);
+      width: 28px; height: 28px; border-radius: 50%; background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border-subtle); margin: 0 auto 0.5rem auto; display: flex;
+      align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(--text-muted);
     }
     .timeline-dot.active {
-      background: var(--accent-green);
-      border-color: var(--accent-green);
-      color: #042f1a;
+      background: var(--accent-green); border-color: var(--accent-green); color: #042f1a;
       box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
     }
   </style>
 </head>
 <body>
   <nav class="navbar-custom">
-    <a href="index.html" class="brand-title">
-      <span class="brand-dot"></span>
-      EcoChain Protocol
-    </a>
+    <a href="index.html" class="brand-title"><span class="brand-dot"></span> EcoChain Protocol</a>
     <div class="nav-links">
       <a href="admin.html" class="nav-link-btn">Ledger Explorer</a>
     </div>
@@ -57,23 +39,21 @@
             <span class="form-label-custom">Verified Identifier</span>
             <h2 id="detId" class="mono-tag" style="font-size: 1.25rem;"></h2>
           </div>
-          <div>
-            <span id="detStatusBadge" class="status-badge registered"></span>
-          </div>
+          <span id="detStatusBadge" class="status-badge registered"></span>
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem;">
           <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-subtle);">
             <span class="form-label-custom">Device</span>
-            <strong id="detDevice" style="font-size: 1rem;"></strong>
+            <strong id="detDevice"></strong>
           </div>
           <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-subtle);">
             <span class="form-label-custom">Weight</span>
-            <strong id="detWeight" style="font-size: 1rem;"></strong> kg
+            <strong id="detWeight"></strong> kg
           </div>
           <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-subtle);">
             <span class="form-label-custom">Registered By</span>
-            <strong id="detOwner" style="font-size: 1rem;"></strong>
+            <strong id="detOwner"></strong>
           </div>
         </div>
 
@@ -99,6 +79,25 @@
           <div class="timeline-step">
             <div id="dot-fin" class="timeline-dot">✓</div>
             <small style="color: var(--text-muted); font-size: 0.75rem;">Recycled</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recovered Materials Card (Only appears if recycler logged material breakdown) -->
+      <div id="materialCard" class="bento-card" style="grid-column: span 12; display: none;">
+        <span class="form-label-custom" style="color: var(--accent-green);">Certified Material Recovery Yields</span>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 0.75rem;">
+          <div style="background: rgba(16, 185, 129, 0.05); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.2);">
+            <span class="form-label-custom">Recovered Copper</span>
+            <strong id="yieldCopper" style="color: var(--accent-green); font-size: 1.1rem;">-</strong> g
+          </div>
+          <div style="background: rgba(16, 185, 129, 0.05); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.2);">
+            <span class="form-label-custom">Recovered Plastic</span>
+            <strong id="yieldPlastic" style="color: var(--accent-green); font-size: 1.1rem;">-</strong> g
+          </div>
+          <div style="background: rgba(16, 185, 129, 0.05); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.2);">
+            <span class="form-label-custom">Precious Metals</span>
+            <strong id="yieldPrecious" style="color: var(--accent-green); font-size: 1.1rem;">-</strong> mg
           </div>
         </div>
       </div>
@@ -141,6 +140,14 @@
         dots.forEach((dotId, idx) => {
           if(idx <= currIdx) document.getElementById(dotId).classList.add('active');
         });
+
+        // Show recovered materials if present
+        if(item.recoveredMaterials) {
+          document.getElementById('materialCard').style.display = 'block';
+          document.getElementById('yieldCopper').innerText = item.recoveredMaterials.copper_g || 0;
+          document.getElementById('yieldPlastic').innerText = item.recoveredMaterials.plastic_g || 0;
+          document.getElementById('yieldPrecious').innerText = item.recoveredMaterials.precious_mg || 0;
+        }
 
         const txList = document.getElementById('txList');
         txList.innerHTML = "";

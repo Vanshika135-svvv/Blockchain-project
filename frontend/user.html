@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Portal | EcoChain</title>
+  <title>User Intake Portal | EcoChain Protocol</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,76 +13,111 @@
       EcoChain Protocol
     </a>
     <div class="nav-links">
-      <a href="user.html" class="nav-link-btn active">User Portal</a>
+      <a href="user.html" class="nav-link-btn active">User Intake</a>
       <a href="collection.html" class="nav-link-btn">Collection Hub</a>
       <a href="recycler.html" class="nav-link-btn">Recycler Facility</a>
       <a href="admin.html" class="nav-link-btn">Ledger Explorer</a>
     </div>
   </nav>
 
-  <div class="bento-container" style="max-width: 900px;">
+  <div class="bento-container" style="max-width: 950px;">
     <div class="bento-grid">
-      <!-- Input Card -->
+      <!-- Input Bento Card -->
       <div class="bento-card" style="grid-column: span 7;">
-        <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.25rem;">Register E-Waste Item</h2>
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Creates a permanent genesis record on the Ethereum blockchain.</p>
+        <span class="form-label-custom">Genesis Registration</span>
+        <h1 style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.25rem;">
+          Register E-Waste Device
+        </h1>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">
+          Notarize initial device submission on Ethereum and generate a physical QR verification badge.
+        </p>
 
         <form id="regForm">
           <div style="margin-bottom: 1rem;">
-            <label class="form-label-custom">Owner / Entity Name</label>
+            <label class="form-label-custom">Owner or Organization Name</label>
             <input type="text" id="ownerName" class="form-control-custom" placeholder="e.g. Vanshika Tiwari" required>
           </div>
+
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
             <div>
               <label class="form-label-custom">Device Category</label>
               <select id="deviceType" class="form-select-custom">
-                <option value="Laptop">Laptop</option>
-                <option value="Mobile Phone">Mobile Phone</option>
-                <option value="Battery">Battery</option>
-                <option value="Printed Circuit Board">PCB / Electronics</option>
+                <option value="Laptop">Laptop / Notebook</option>
+                <option value="Mobile Phone">Mobile Phone / Tablet</option>
+                <option value="Lithium Battery">Lithium-Ion Battery</option>
+                <option value="Printed Circuit Board">PCB / Circuit Board</option>
+                <option value="Peripherals">Keyboard / Peripheral</option>
               </select>
             </div>
             <div>
-              <label class="form-label-custom">Weight (kg)</label>
-              <input type="number" step="0.1" id="weight" class="form-control-custom" placeholder="e.g. 2.4" required>
+              <label class="form-label-custom">Net Weight (kg)</label>
+              <input type="number" step="0.1" id="weight" class="form-control-custom" placeholder="e.g. 2.4" required oninput="calcCarbon(this.value)">
             </div>
           </div>
-          <div style="margin-bottom: 1.5rem;">
-            <label class="form-label-custom">Physical State & Serial Info</label>
-            <input type="text" id="condition" class="form-control-custom" placeholder="e.g. Broken screen, non-booting motherboard">
+
+          <!-- Carbon Offset Estimator Sub-Card -->
+          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.8rem; color: var(--accent-green);">Estimated Carbon Avoidance:</span>
+            <strong id="carbonOffset" style="font-size: 0.95rem; color: var(--accent-green);">0.0 kg CO₂e</strong>
           </div>
-          <button type="submit" id="submitBtn" class="btn-bento-primary">Sign & Broadcast Transaction</button>
+
+          <div style="margin-bottom: 1.5rem;">
+            <label class="form-label-custom">Physical State & Serial Details</label>
+            <input type="text" id="condition" class="form-control-custom" placeholder="e.g. Cracked display, obsolete motherboard">
+          </div>
+
+          <button type="submit" id="submitBtn" class="btn-bento-primary">
+            Sign & Broadcast Genesis Block
+          </button>
         </form>
       </div>
 
-      <!-- Dynamic QR / Confirmation Bento -->
+      <!-- Generated QR & Receipt Bento Card -->
       <div class="bento-card" style="grid-column: span 5; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
-        <div id="qrPlaceholder" style="padding: 2rem 0;">
-          <div style="width: 70px; height: 70px; border: 2px dashed var(--border-subtle); border-radius: 12px; margin: 0 auto 1rem auto; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
-            QR
+        <div id="qrPlaceholder" style="padding: 2.5rem 0;">
+          <div style="width: 80px; height: 80px; border: 2px dashed var(--border-subtle); border-radius: 14px; margin: 0 auto 1rem auto; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.85rem;">
+            QR CODE
           </div>
-          <p style="color: var(--text-muted); font-size: 0.85rem;">Submit registration to generate tamper-evident QR verification badge.</p>
+          <p style="color: var(--text-muted); font-size: 0.85rem; max-width: 220px;">
+            Submit your hardware specs to mint the asset and generate the tracking badge.
+          </p>
         </div>
 
         <div id="receiptBox" style="display: none; width: 100%;">
-          <span class="status-badge registered" style="margin-bottom: 0.75rem;">GENESIS CONFIRMED</span>
+          <span class="status-badge registered" style="margin-bottom: 0.75rem;">GENESIS RECORD CONFIRMED</span>
           <h4 id="outId" class="mono-tag" style="display: block; font-size: 0.95rem; margin-bottom: 0.5rem;"></h4>
+          
           <div style="background: white; padding: 10px; border-radius: 12px; display: inline-block; margin: 0.75rem 0;">
             <img id="outQr" style="width: 140px; height: 140px; display: block;" alt="QR Code">
           </div>
+          
           <p style="font-size: 0.72rem; color: var(--text-muted); word-break: break-all; margin-bottom: 1rem;" id="outHash"></p>
-          <a id="trackLink" class="btn-bento-action btn-action-green" style="display: block; text-decoration: none; font-size: 0.85rem;" target="_blank">Open Audit Timeline &rarr;</a>
+          
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <a id="trackLink" class="btn-bento-action btn-action-green" style="text-decoration: none; font-size: 0.85rem;" target="_blank">
+              Open Audit Timeline &rarr;
+            </a>
+            <button onclick="window.print()" class="btn-bento-action btn-action-blue" style="font-size: 0.8rem; padding: 0.5rem;">
+              Print Hardware Badge 🖨
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
+    function calcCarbon(val) {
+      const kg = parseFloat(val) || 0;
+      const saved = (kg * 1.44).toFixed(2);
+      document.getElementById('carbonOffset').innerText = `${saved} kg CO₂e`;
+    }
+
     document.getElementById('regForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('submitBtn');
       btn.disabled = true;
-      btn.innerText = "Signing On-Chain...";
+      btn.innerText = "Broadcasting to Ethereum...";
 
       const payload = {
         ownerName: document.getElementById('ownerName').value,
@@ -113,7 +148,7 @@
         alert("Server connection failed. Is app.py active?");
       } finally {
         btn.disabled = false;
-        btn.innerText = "Sign & Broadcast Transaction";
+        btn.innerText = "Sign & Broadcast Genesis Block";
       }
     });
   </script>

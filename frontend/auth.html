@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Portal | EcoChain Protocol</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar-custom">
+    <a href="index.html" class="brand-title">
+      <span class="brand-dot"></span>
+      EcoChain Protocol
+    </a>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link-btn">Home</a>
+      <a href="admin.html" class="nav-link-btn">Explorer</a>
+    </div>
+  </nav>
+
+  <div class="bento-container" style="max-width: 500px; margin-top: 3rem;">
+    <div class="bento-card">
+      <!-- Toggle Tabs -->
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.03); padding: 4px; border-radius: 10px; border: 1px solid var(--border-subtle);">
+        <button id="tabLogin" onclick="switchAuth(true)" class="btn-bento-action btn-action-green" style="flex: 1; padding: 0.6rem; font-size: 0.85rem;">Sign In</button>
+        <button id="tabRegister" onclick="switchAuth(false)" class="nav-link-btn" style="flex: 1; text-align: center; font-size: 0.85rem; border: none; background: transparent; cursor: pointer;">Create Account</button>
+      </div>
+
+      <h1 id="authTitle" style="font-size: 1.4rem; font-weight: 800; margin-bottom: 0.25rem;">Sign in to EcoChain</h1>
+      <p id="authSubtitle" style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Access your personal submissions and environmental impact metrics.</p>
+
+      <form id="authForm">
+        <div id="nameFieldGroup" style="display: none; margin-bottom: 1rem;">
+          <label class="form-label-custom">Full Name</label>
+          <input type="text" id="authName" class="form-control-custom" placeholder="e.g. Vanshika Tiwari">
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+          <label class="form-label-custom">Email Address</label>
+          <input type="email" id="authEmail" class="form-control-custom" placeholder="name@domain.com" required>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+          <label class="form-label-custom">Password</label>
+          <input type="password" id="authPassword" class="form-control-custom" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" id="authSubmitBtn" class="btn-bento-primary">Sign In</button>
+      </form>
+
+      <div id="authAlert" style="display: none; padding: 0.85rem; border-radius: 8px; font-size: 0.82rem; margin-top: 1rem;"></div>
+    </div>
+  </div>
+
+  <script>
+    let isLogin = true;
+
+    function switchAuth(toLogin) {
+      isLogin = toLogin;
+      const nameGroup = document.getElementById('nameFieldGroup');
+      const title = document.getElementById('authTitle');
+      const sub = document.getElementById('authSubtitle');
+      const btn = document.getElementById('authSubmitBtn');
+      const tabL = document.getElementById('tabLogin');
+      const tabR = document.getElementById('tabRegister');
+      const alertBox = document.getElementById('authAlert');
+      alertBox.style.display = 'none';
+
+      if(isLogin) {
+        nameGroup.style.display = 'none';
+        title.innerText = "Sign in to EcoChain";
+        sub.innerText = "Access your personal submissions and environmental impact metrics.";
+        btn.innerText = "Sign In";
+        tabL.className = "btn-bento-action btn-action-green";
+        tabR.className = "nav-link-btn";
+        tabR.style.background = "transparent";
+      } else {
+        nameGroup.style.display = 'block';
+        title.innerText = "Create Protocol Account";
+        sub.innerText = "Track electronic assets and verify proof of recycling.";
+        btn.innerText = "Create Account";
+        tabR.className = "btn-bento-action btn-action-green";
+        tabL.className = "nav-link-btn";
+        tabL.style.background = "transparent";
+      }
+    }
+
+    document.getElementById('authForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const alertBox = document.getElementById('authAlert');
+      alertBox.style.display = 'none';
+
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const name = document.getElementById('authName').value.trim();
+
+      const url = isLogin 
+        ? 'http://127.0.0.1:5000/api/auth/login'
+        : 'http://127.0.0.1:5000/api/auth/register';
+
+      const payload = isLogin ? { email, password } : { name, email, password };
+
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if(data.success) {
+          localStorage.setItem('ecochain_user', JSON.stringify(data.user));
+          localStorage.setItem('ecochain_token', data.token);
+          window.location.href = 'user-dashboard.html';
+        } else {
+          alertBox.style.display = 'block';
+          alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+          alertBox.style.color = '#f87171';
+          alertBox.innerText = data.error || "Authentication failed.";
+        }
+      } catch(err) {
+        alertBox.style.display = 'block';
+        alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+        alertBox.style.color = '#f87171';
+        alertBox.innerText = "Could not reach app.py server.";
+      }
+    });
+  </script>
+</body>
+</html>
