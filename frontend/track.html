@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lifecycle Verification</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .step-circle { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .step-active { background-color: #198754; color: white; }
+        .step-inactive { background-color: #dee2e6; color: #6c757d; }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-5" style="max-width: 750px;">
+        <div class="card shadow-sm border-0 p-4">
+            <h4 class="fw-bold mb-1">E-Waste Cryptographic Verification</h4>
+            <p class="text-muted small">Tamper-evident lifecycle recorded via Ethereum Smart Contracts.</p>
+            <hr>
+
+            <div id="loader" class="text-center py-4">
+                <div class="spinner-border text-success"></div>
+                <p class="mt-2 text-muted">Retrieving chain records...</p>
+            </div>
+
+            <div id="content" class="d-none">
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted d-block">ID</small>
+                        <span id="detId" class="fw-bold"></span>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted d-block">Device</small>
+                        <span id="detDevice" class="fw-bold"></span>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted d-block">Weight</small>
+                        <span id="detWeight" class="fw-bold"></span> kg
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted d-block">Current Status</small>
+                        <span id="detStatus" class="badge bg-success"></span>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold mb-3">Lifecycle Timeline</h6>
+                <div class="d-flex justify-content-between mb-4 text-center">
+                    <div>
+                        <div id="st-reg" class="step-circle step-inactive mx-auto mb-1">✓</div>
+                        <small>Registered</small>
+                    </div>
+                    <div>
+                        <div id="st-col" class="step-circle step-inactive mx-auto mb-1">✓</div>
+                        <small>Collected</small>
+                    </div>
+                    <div>
+                        <div id="st-trans" class="step-circle step-inactive mx-auto mb-1">✓</div>
+                        <small>In Transit</small>
+                    </div>
+                    <div>
+                        <div id="st-rec" class="step-circle step-inactive mx-auto mb-1">✓</div>
+                        <small>Received</small>
+                    </div>
+                    <div>
+                        <div id="st-fin" class="step-circle step-inactive mx-auto mb-1">✓</div>
+                        <small>Recycled</small>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold mb-2">Immutable Blockchain Events</h6>
+                <ul id="txList" class="list-group small font-monospace"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const ewasteId = urlParams.get('id');
+
+        async function fetchDetails() {
+            if(!ewasteId) {
+                document.getElementById('loader').innerHTML = "<p class='text-danger'>No E-Waste ID specified in URL.</p>";
+                return;
+            }
+
+            const res = await fetch(`http://127.0.0.1:5000/api/ewaste/${ewasteId}`);
+            const data = await res.json();
+
+            if(!data.success) {
+                document.getElementById('loader').innerHTML = `<p class='text-danger'>${data.message}</p>`;
+                return;
+            }
+
+            const item = data.item;
+            document.getElementById('loader').classList.add('d-none');
+            document.getElementById('content').classList.remove('d-none');
+
+            document.getElementById('detId').innerText = item.ewasteId;
+            document.getElementById('detDevice').innerText = item.deviceType;
+            document.getElementById('detWeight').innerText = item.weight;
+            document.getElementById('detStatus').innerText = item.status;
+
+            // Highlight progress steps
+            const stages = ["REGISTERED", "COLLECTED", "IN TRANSIT", "RECEIVED", "RECYCLED"];
+            const currIdx = stages.indexOf(item.status);
+            const ids = ["st-reg", "st-col", "st-trans", "st-rec", "st-fin"];
+
+            ids.forEach((elemId, idx) => {
+                if (idx <= currIdx) {
+                    document.getElementById(elemId).className = "step-circle step-active mx-auto mb-1";
+                }
+            });
+
+            // Populate transaction history
+            const txList = document.getElementById('txList');
+            txList.innerHTML = "";
+            item.transactionHashes.forEach(tx => {
+                const li = document.createElement('li');
+                li.className = "list-group-item d-flex justify-content-between align-items-center";
+                li.innerHTML = `
+                    <span><strong>${tx.status}</strong><br><span class="text-muted" style="font-size:0.75rem;">${tx.hash}</span></span>
+                    <span class="badge bg-light text-dark">${tx.timestamp}</span>
+                `;
+                txList.appendChild(li);
+            });
+        }
+
+        fetchDetails();
+    </script>
+</body>
+</html>

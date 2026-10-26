@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Recycler Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container py-5" style="max-width: 600px;">
+        <a href="index.html" class="text-decoration-none text-muted mb-3 d-inline-block">&larr; Back to Home</a>
+        <div class="card shadow-sm p-4 border-0">
+            <h4 class="fw-bold mb-2">Authorized Recycler Verification</h4>
+            <p class="text-muted small">Confirm arrival at facility and finalize recycling proof on-chain.</p>
+            
+            <div class="mb-3">
+                <label class="form-label">E-Waste ID</label>
+                <input type="text" id="targetId" class="form-control" placeholder="e.g. EW-1718000000" required>
+            </div>
+            
+            <div class="d-grid gap-2">
+                <button class="btn btn-warning" onclick="updateStatus('RECEIVED')">Acknowledge RECEIVED</button>
+                <button class="btn btn-success" onclick="updateStatus('RECYCLED')">Certify RECYCLED ✓</button>
+            </div>
+
+            <div id="statusRes" class="alert mt-3 d-none"></div>
+        </div>
+    </div>
+
+    <script>
+        async function updateStatus(newStatus) {
+            const id = document.getElementById('targetId').value.trim();
+            if(!id) return alert("Please enter a valid E-Waste ID");
+
+            const resDiv = document.getElementById('statusRes');
+            resDiv.className = "alert alert-secondary mt-3";
+            resDiv.innerText = `Submitting proof for '${newStatus}' to Ethereum...`;
+            resDiv.classList.remove('d-none');
+
+            try {
+                const res = await fetch('http://127.0.0.1:5000/api/ewaste/update', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ ewasteId: id, status: newStatus })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    resDiv.className = "alert alert-success mt-3";
+                    resDiv.innerHTML = `<strong>Verified:</strong> Item updated to <b>${newStatus}</b>.<br><small class='text-truncate d-block'>Tx: ${data.txHash}</small>`;
+                } else {
+                    resDiv.className = "alert alert-danger mt-3";
+                    resDiv.innerText = "Error: " + data.error;
+                }
+            } catch(e) {
+                resDiv.className = "alert alert-danger mt-3";
+                resDiv.innerText = "Connection error. Is app.py running?";
+            }
+        }
+    </script>
+</body>
+</html>
