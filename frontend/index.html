@@ -1,56 +1,462 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoChain | Blockchain E-Waste Tracking</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <nav class="navbar navbar-dark bg-dark px-4 py-3">
-        <a class="navbar-brand fw-bold text-success" href="index.html">♻ EcoChain Tracker</a>
-        <div>
-            <a href="user.html" class="btn btn-outline-light btn-sm me-2">User Portal</a>
-            <a href="collection.html" class="btn btn-outline-info btn-sm me-2">Collection Center</a>
-            <a href="recycler.html" class="btn btn-outline-warning btn-sm me-2">Recycler Portal</a>
-            <a href="admin.html" class="btn btn-outline-success btn-sm">Admin View</a>
-        </div>
-    </nav>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoChain | Decentralized E-Waste Protocol</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Homepage Specific Scaffolding */
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      color: var(--accent-green);
+      margin-bottom: 1.25rem;
+    }
 
-    <div class="container py-5 text-center">
-        <h1 class="display-5 fw-bold text-dark mb-3">Blockchain-Based E-Waste Tracking & Recycling Verification</h1>
-        <p class="lead text-muted mb-4">Track electronic waste through every lifecycle phase with tamper-evident, decentralized verification.</p>
-        
-        <div class="row g-4 justify-content-center mt-3">
-            <div class="col-md-3">
-                <div class="card h-100 shadow-sm border-0 p-3">
-                    <h5 class="fw-bold">User Portal</h5>
-                    <p class="small text-muted">Register electronic devices and receive a blockchain ID and QR verification badge.</p>
-                    <a href="user.html" class="btn btn-success mt-auto">Register Item</a>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card h-100 shadow-sm border-0 p-3">
-                    <h5 class="fw-bold">Collection Center</h5>
-                    <p class="small text-muted">Acknowledge item receipt and transfer custody to logistics.</p>
-                    <a href="collection.html" class="btn btn-info text-white mt-auto">Collect / Transit</a>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card h-100 shadow-sm border-0 p-3">
-                    <h5 class="fw-bold">Recycler Portal</h5>
-                    <p class="small text-muted">Receive devices, log processing steps, and verify complete recycling.</p>
-                    <a href="recycler.html" class="btn btn-warning mt-auto">Process / Recycle</a>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card h-100 shadow-sm border-0 p-3">
-                    <h5 class="fw-bold">Audit & Admin</h5>
-                    <p class="small text-muted">Monitor total ledger volume and inspect raw blockchain transaction hashes.</p>
-                    <a href="admin.html" class="btn btn-dark mt-auto">View Ledger</a>
-                </div>
-            </div>
-        </div>
+    .hero-headline {
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.25rem;
+      background: linear-gradient(180deg, #ffffff 40%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .section-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+
+    .workflow-step-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--accent-green);
+      margin-bottom: 1rem;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    .comparison-table th {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .comparison-table td {
+      padding: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
+    }
+
+    .check-icon {
+      color: var(--accent-green);
+      font-weight: 700;
+      margin-right: 0.4rem;
+    }
+
+    .cross-icon {
+      color: #ef4444;
+      font-weight: 700;
+      margin-right: 0.4rem;
+    }
+
+    .footer-custom {
+      background: rgba(17, 23, 38, 0.95);
+      border-top: 1px solid var(--border-subtle);
+      padding: 3rem 1.5rem 2rem 1.5rem;
+      margin-top: 5rem;
+    }
+
+    .footer-grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <nav class="navbar-custom">
+    <a href="index.html" class="brand-title">
+      <span class="brand-dot"></span>
+      EcoChain Protocol
+    </a>
+    <div class="nav-links">
+    <a href="user.html" class="nav-link-btn">User Intake</a>
+    <a href="collection.html" class="nav-link-btn">Collection Hub</a>
+    <a href="recycler.html" class="nav-link-btn">Recycler Facility</a>
+    <a href="admin.html" class="nav-link-btn">Ledger Explorer</a>
+    <a href="auth.html" class="btn-bento-action btn-action-green" style="padding: 0.4rem 0.85rem; font-size: 0.85rem; text-decoration: none;">Account / Login</a>
     </div>
+  </nav>
+
+  <div class="bento-container">
+    <!-- SECTION 1: HERO & AUDIT ENGINE -->
+    <div class="bento-grid" style="margin-bottom: 2rem;">
+      <div class="bento-card" style="grid-column: span 8; display: flex; flex-direction: column; justify-content: center;">
+        <div>
+          <div class="hero-badge">
+            <span class="brand-dot"></span> ETHEREUM LOCALHOST &bull; HARDHAT (31337)
+          </div>
+          <h1 class="hero-headline">
+            Verifiable E-Waste Chain of Custody
+          </h1>
+          <p style="color: var(--text-muted); font-size: 1.05rem; line-height: 1.6; max-width: 620px; margin-bottom: 2rem;">
+            A decentralized, hybrid-architecture tracking protocol providing tamper-evident proof for every electronic device from user handoff to complete certified material reclamation.
+          </p>
+
+          <!-- Direct Audit Quick Input -->
+          <div style="display: flex; gap: 0.75rem; max-width: 580px;">
+            <input type="text" id="quickId" class="form-control-custom" placeholder="Verify Asset ID (e.g. EW-1793029669)">
+            <button class="btn-bento-action btn-action-green" onclick="quickTrack()" style="white-space: nowrap; padding: 0.85rem 1.4rem;">
+              Audit Asset &rarr;
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-Time Protocol Metrics Card -->
+      <div class="bento-card" style="grid-column: span 4; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <span class="form-label-custom">Global Network Stats</span>
+          
+          <div style="margin: 1.5rem 0;">
+            <span style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Total On-Chain Assets</span>
+            <h2 id="homeTotalAssets" style="font-size: 2.2rem; font-weight: 800; margin-top: 0.25rem;">-</h2>
+          </div>
+
+          <div style="margin: 1.5rem 0;">
+            <span style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Diverted Electronic Mass</span>
+            <h2 id="homeTotalWeight" style="font-size: 2.2rem; font-weight: 800; color: var(--accent-green); margin-top: 0.25rem;">- kg</h2>
+          </div>
+
+          <div>
+            <span style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Recycling Certified Ratio</span>
+            <h2 id="homeRecycledRate" style="font-size: 1.6rem; font-weight: 800; color: var(--accent-blue); margin-top: 0.25rem;">-%</h2>
+          </div>
+        </div>
+
+        <div style="border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
+          <span class="form-label-custom">Smart Contract Registry</span>
+          <div class="mono-tag" style="font-size: 0.68rem; display: block; overflow: hidden; text-overflow: ellipsis;">
+            0x5FbDB2315678afecb367f032d93F642f64180aa3
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: ACCESS THE ACTOR PORTALS -->
+    <div style="margin: 3.5rem 0 1.5rem 0;">
+      <h2 class="section-title">Protocol Stakeholder Portals</h2>
+      <p class="section-subtitle">Dedicated role-gated interfaces designed for seamless operational throughput without cryptographic friction.</p>
+    </div>
+
+    <div class="bento-grid" style="margin-bottom: 4rem;">
+      <div class="bento-card" style="grid-column: span 3;">
+        <span class="form-label-custom">Portal 01 / Citizen & Org</span>
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">User Portal</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; line-height: 1.5;">
+          Log obsolete electronics, instantly calculate avoided CO₂ equivalent emissions, and print dynamic QR badges.
+        </p>
+        <a href="user.html" class="btn-bento-primary" style="display: block; text-align: center; text-decoration: none;">Launch Portal &rarr;</a>
+      </div>
+
+      <div class="bento-card" style="grid-column: span 3;">
+        <span class="form-label-custom">Portal 02 / Custody Intake</span>
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Collection Hub</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; line-height: 1.5;">
+          Scan incoming devices, verify physical specs against on-chain records, and dispatch sealed logistics batches.
+        </p>
+        <a href="collection.html" class="btn-bento-action btn-action-amber" style="display: block; text-align: center; text-decoration: none; width: 100%;">Intake System &rarr;</a>
+      </div>
+
+      <div class="bento-card" style="grid-column: span 3;">
+        <span class="form-label-custom">Portal 03 / Refinement</span>
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Recycler Facility</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; line-height: 1.5;">
+          Acknowledge physical arrival, log reclaimed material yields (Copper, Gold, Plastic), and mint the final recycling seal.
+        </p>
+        <a href="recycler.html" class="btn-bento-action btn-action-blue" style="display: block; text-align: center; text-decoration: none; width: 100%;">Facility Log &rarr;</a>
+      </div>
+
+      <div class="bento-card" style="grid-column: span 3;">
+        <span class="form-label-custom">Portal 04 / Public Audit</span>
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Ledger Explorer</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; line-height: 1.5;">
+          Search any transaction, filter through device classifications, and inspect raw Ethereum block receipts.
+        </p>
+        <a href="admin.html" class="btn-bento-action btn-action-green" style="display: block; text-align: center; text-decoration: none; width: 100%;">Open Explorer &rarr;</a>
+      </div>
+    </div>
+
+    <!-- SECTION 3: PROTOCOL ARCHITECTURE & LIFECYCLE BREAKDOWN -->
+    <div style="margin: 3.5rem 0 1.5rem 0;">
+      <h2 class="section-title">Cryptographic Custody Lifecycle</h2>
+      <p class="section-subtitle">Every state transition is notarized by smart contracts on Ethereum, preventing retroactive tampering.</p>
+    </div>
+
+    <div class="bento-grid" style="margin-bottom: 4rem;">
+      <div class="bento-card" style="grid-column: span 12;">
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.5rem;">
+          <div>
+            <div class="workflow-step-num">01</div>
+            <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem;">Registration</h4>
+            <p style="color: var(--text-muted); font-size: 0.8rem; line-height: 1.5;">
+              User submits device payload. Smart contract invokes <code>registerEWaste()</code> and generates the genesis hash.
+            </p>
+          </div>
+          <div>
+            <div class="workflow-step-num">02</div>
+            <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem;">Intake Drop-off</h4>
+            <p style="color: var(--text-muted); font-size: 0.8rem; line-height: 1.5;">
+              Authorized collector verifies physical hardware and calls <code>collectEWaste()</code> to assume legal responsibility.
+            </p>
+          </div>
+          <div>
+            <div class="workflow-step-num">03</div>
+            <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem;">Logistics Transit</h4>
+            <p style="color: var(--text-muted); font-size: 0.8rem; line-height: 1.5;">
+              Custody transfers to transit. Status updates to <code>IN TRANSIT</code> with courier wallet signature.
+            </p>
+          </div>
+          <div>
+            <div class="workflow-step-num">04</div>
+            <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem;">Plant Receipt</h4>
+            <p style="color: var(--text-muted); font-size: 0.8rem; line-height: 1.5;">
+              Recycling plant logs warehouse intake via <code>receiveEWaste()</code>, preparing batches for smelting and separation.
+            </p>
+          </div>
+          <div>
+            <div class="workflow-step-num">05</div>
+            <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem;">Certified Recovery</h4>
+            <p style="color: var(--text-muted); font-size: 0.8rem; line-height: 1.5;">
+              Plant logs reclaimed grams of Copper, Plastic, and Gold. <code>completeRecycling()</code> permanently seals the asset.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: ARCHITECTURAL COMPARISON (TRADITIONAL VS BLOCKCHAIN) -->
+    <div style="margin: 3.5rem 0 1.5rem 0;">
+      <h2 class="section-title">Why Decentralized Architecture Matters</h2>
+      <p class="section-subtitle">Evaluating EcoChain against standard centralized scrap management databases.</p>
+    </div>
+
+    <div class="bento-grid" style="margin-bottom: 4rem;">
+      <div class="bento-card" style="grid-column: span 12;">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th style="width: 28%;">Capability & Vector</th>
+              <th style="width: 36%;">Traditional Centralized Relational DB</th>
+              <th style="width: 36%;">EcoChain Hybrid Blockchain Network</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Audit Integrity</strong></td>
+              <td><span class="cross-icon">&times;</span> Vulnerable to internal SQL updates or manual admin erasure</td>
+              <td><span class="check-icon">&check;</span> Immutable append-only ledger; transactions cannot be deleted</td>
+            </tr>
+            <tr>
+              <td><strong>Multi-Party Trust</strong></td>
+              <td><span class="cross-icon">&times;</span> Requires all actors to trust a single vendor's server</td>
+              <td><span class="check-icon">&check;</span> Cryptographic proof with verifiable signatures from each handler</td>
+            </tr>
+            <tr>
+              <td><strong>Public Verifiability</strong></td>
+              <td><span class="cross-icon">&times;</span> Closed proprietary portals hidden behind authentication walls</td>
+              <td><span class="check-icon">&check;</span> Open QR verification accessible by any smartphone scanner</td>
+            </tr>
+            <tr>
+              <td><strong>Storage Efficiency</strong></td>
+              <td><span class="check-icon">&check;</span> Cheap disk storage for arbitrary high-resolution images</td>
+              <td><span class="check-icon">&check;</span> Optimized hybrid layer: heavy metadata off-chain, proofs on-chain</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SECTION 5: LIVE RECENT TRANSACTIONS FEED -->
+    <div style="margin: 3.5rem 0 1.5rem 0; display: flex; justify-content: space-between; align-items: flex-end;">
+      <div>
+        <h2 class="section-title">Live On-Chain Activity</h2>
+        <p class="section-subtitle" style="margin-bottom: 0;">Real-time stream of recent transactions processed across the network.</p>
+      </div>
+      <a href="admin.html" class="nav-link-btn" style="font-size: 0.85rem;">View Complete Ledger &rarr;</a>
+    </div>
+
+    <div class="bento-grid" style="margin-top: 1.5rem; margin-bottom: 4rem;">
+      <div class="bento-card" style="grid-column: span 12; padding: 0.75rem 1.5rem;">
+        <div id="recentTxContainer" style="display: flex; flex-direction: column;">
+          <div style="text-align: center; color: var(--text-muted); padding: 2rem;">Connecting to chain...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPREHENSIVE PROTOCOL FOOTER -->
+  <footer class="footer-custom">
+    <div class="footer-grid">
+      <div style="grid-column: span 5;">
+        <div class="brand-title" style="margin-bottom: 1rem;">
+          <span class="brand-dot"></span>
+          EcoChain Protocol
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.6; max-width: 380px; margin-bottom: 1.25rem;">
+          A minor project engineered to solve fraudulent e-waste dumping and opaque supply chains using Solidity smart contracts and verifiable state proofs.
+        </p>
+        <span class="mono-tag" style="font-size: 0.72rem;">SVVV Dept. of Information Technology / AI</span>
+      </div>
+
+      <div style="grid-column: span 3;">
+        <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 1rem;">
+          Protocol Workflows
+        </h4>
+        <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.85rem;">
+          <a href="user.html" style="color: var(--text-main); text-decoration: none;">Citizen Asset Registration</a>
+          <a href="collection.html" style="color: var(--text-main); text-decoration: none;">Custody Transfer Logistics</a>
+          <a href="recycler.html" style="color: var(--text-main); text-decoration: none;">Recycling & Yield Certification</a>
+          <a href="admin.html" style="color: var(--text-main); text-decoration: none;">Public Ledger Analytics</a>
+        </div>
+      </div>
+
+      <div style="grid-column: span 4;">
+        <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 1rem;">
+          Tech Stack Architecture
+        </h4>
+        <p style="color: var(--text-muted); font-size: 0.8rem; line-height: 1.6;">
+          <strong>Blockchain:</strong> Ethereum (Hardhat Localhost Node)<br>
+          <strong>Smart Contracts:</strong> Solidity 0.8.28 (Ethers.js v6)<br>
+          <strong>Backend API:</strong> Python 3.13, Flask, Web3.py<br>
+          <strong>Off-Chain Store:</strong> MongoDB Atlas Cluster<br>
+          <strong>Client Layer:</strong> Bento Grid Architecture / Minimalist Web3
+        </p>
+      </div>
+    </div>
+
+    <div style="max-width: 1200px; margin: 2rem auto 0 auto; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted);">
+      <div>&copy; 2026 EcoChain Protocol. Academic Minor Project.</div>
+      <div style="display: flex; gap: 1rem;">
+        <span>Status: <b style="color: var(--accent-green);">Mainnet Local Active</b></span>
+        <span>Chain ID: <b>31337</b></span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function quickTrack() {
+      const id = document.getElementById('quickId').value.trim();
+      if(id) {
+        window.location.href = `track.html?id=${encodeURIComponent(id)}`;
+      } else {
+        alert("Please enter a valid E-Waste ID (e.g. EW-1793029669)");
+      }
+    }
+
+    async function loadHomepageData() {
+      try {
+        const res = await fetch('http://127.0.0.1:5000/api/ewaste/all');
+        const data = await res.json();
+        if(!data.success) return;
+
+        const items = data.items;
+        document.getElementById('homeTotalAssets').innerText = items.length;
+
+        let weightSum = 0;
+        let recycledCount = 0;
+
+        items.forEach(i => {
+          weightSum += Number(i.weight || 0);
+          if(i.status === 'RECYCLED') recycledCount++;
+        });
+
+        document.getElementById('homeTotalWeight').innerText = weightSum.toFixed(1) + " kg";
+        
+        const rate = items.length > 0 ? Math.round((recycledCount / items.length) * 100) : 0;
+        document.getElementById('homeRecycledRate').innerText = `${rate}%`;
+
+        // Render recent 3 transactions
+        const container = document.getElementById('recentTxContainer');
+        container.innerHTML = "";
+
+        const recentItems = items.slice(-4).reverse();
+        if(recentItems.length === 0) {
+          container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No transactions recorded yet.</div>`;
+          return;
+        }
+
+        recentItems.forEach(item => {
+          const row = document.createElement('div');
+          row.style.display = 'flex';
+          row.style.justifyContent = 'space-between';
+          row.style.alignItems = 'center';
+          row.style.padding = '0.85rem 0';
+          row.style.borderBottom = '1px solid rgba(255, 255, 255, 0.04)';
+
+          const statusClass = item.status.toLowerCase().replace(/\s+/g, '');
+          const lastTx = item.transactionHashes ? item.transactionHashes[item.transactionHashes.length - 1] : null;
+          const hashDisplay = lastTx ? lastTx.hash.slice(0, 18) + '...' : 'Genesis Mined';
+
+          row.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <span class="mono-tag" style="font-size: 0.78rem;">${item.ewasteId}</span>
+              <span style="font-size: 0.85rem; font-weight: 500;">${item.deviceType} (${item.weight} kg)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <span class="status-badge ${statusClass}">${item.status}</span>
+              <span class="mono-tag" style="font-size: 0.7rem; color: var(--text-muted);">${hashDisplay}</span>
+              <a href="track.html?id=${item.ewasteId}" class="btn-verify" style="font-size: 0.72rem; padding: 0.3rem 0.65rem;">Audit &rarr;</a>
+            </div>
+          `;
+          container.appendChild(row);
+        });
+
+      } catch(err) {
+        console.error("Home feed error:", err);
+      }
+    }
+
+    loadHomepageData();
+  </script>
 </body>
 </html>
