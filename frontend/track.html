@@ -1,130 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Lifecycle Verification</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .step-circle { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .step-active { background-color: #198754; color: white; }
-        .step-inactive { background-color: #dee2e6; color: #6c757d; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lifecycle Verification | EcoChain</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .timeline-step {
+      flex: 1;
+      text-align: center;
+      position: relative;
+    }
+    .timeline-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border-subtle);
+      margin: 0 auto 0.5rem auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+    .timeline-dot.active {
+      background: var(--accent-green);
+      border-color: var(--accent-green);
+      color: #042f1a;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+    }
+  </style>
 </head>
-<body class="bg-light">
-    <div class="container py-5" style="max-width: 750px;">
-        <div class="card shadow-sm border-0 p-4">
-            <h4 class="fw-bold mb-1">E-Waste Cryptographic Verification</h4>
-            <p class="text-muted small">Tamper-evident lifecycle recorded via Ethereum Smart Contracts.</p>
-            <hr>
+<body>
+  <nav class="navbar-custom">
+    <a href="index.html" class="brand-title">
+      <span class="brand-dot"></span>
+      EcoChain Protocol
+    </a>
+    <div class="nav-links">
+      <a href="admin.html" class="nav-link-btn">Ledger Explorer</a>
+    </div>
+  </nav>
 
-            <div id="loader" class="text-center py-4">
-                <div class="spinner-border text-success"></div>
-                <p class="mt-2 text-muted">Retrieving chain records...</p>
-            </div>
-
-            <div id="content" class="d-none">
-                <div class="row g-3 mb-4">
-                    <div class="col-6 col-md-3">
-                        <small class="text-muted d-block">ID</small>
-                        <span id="detId" class="fw-bold"></span>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <small class="text-muted d-block">Device</small>
-                        <span id="detDevice" class="fw-bold"></span>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <small class="text-muted d-block">Weight</small>
-                        <span id="detWeight" class="fw-bold"></span> kg
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <small class="text-muted d-block">Current Status</small>
-                        <span id="detStatus" class="badge bg-success"></span>
-                    </div>
-                </div>
-
-                <h6 class="fw-bold mb-3">Lifecycle Timeline</h6>
-                <div class="d-flex justify-content-between mb-4 text-center">
-                    <div>
-                        <div id="st-reg" class="step-circle step-inactive mx-auto mb-1">✓</div>
-                        <small>Registered</small>
-                    </div>
-                    <div>
-                        <div id="st-col" class="step-circle step-inactive mx-auto mb-1">✓</div>
-                        <small>Collected</small>
-                    </div>
-                    <div>
-                        <div id="st-trans" class="step-circle step-inactive mx-auto mb-1">✓</div>
-                        <small>In Transit</small>
-                    </div>
-                    <div>
-                        <div id="st-rec" class="step-circle step-inactive mx-auto mb-1">✓</div>
-                        <small>Received</small>
-                    </div>
-                    <div>
-                        <div id="st-fin" class="step-circle step-inactive mx-auto mb-1">✓</div>
-                        <small>Recycled</small>
-                    </div>
-                </div>
-
-                <h6 class="fw-bold mb-2">Immutable Blockchain Events</h6>
-                <ul id="txList" class="list-group small font-monospace"></ul>
-            </div>
-        </div>
+  <div class="bento-container" style="max-width: 900px;">
+    <div id="loader" style="text-align: center; padding: 4rem 0;">
+      <p style="color: var(--text-muted);">Querying Ethereum ledger roots...</p>
     </div>
 
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const ewasteId = urlParams.get('id');
+    <div id="trackContent" style="display: none;" class="bento-grid">
+      <!-- Overview Card -->
+      <div class="bento-card" style="grid-column: span 12;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
+          <div>
+            <span class="form-label-custom">Verified Identifier</span>
+            <h2 id="detId" class="mono-tag" style="font-size: 1.25rem;"></h2>
+          </div>
+          <div>
+            <span id="detStatusBadge" class="status-badge registered"></span>
+          </div>
+        </div>
 
-        async function fetchDetails() {
-            if(!ewasteId) {
-                document.getElementById('loader').innerHTML = "<p class='text-danger'>No E-Waste ID specified in URL.</p>";
-                return;
-            }
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem;">
+          <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-subtle);">
+            <span class="form-label-custom">Device</span>
+            <strong id="detDevice" style="font-size: 1rem;"></strong>
+          </div>
+          <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-subtle);">
+            <span class="form-label-custom">Weight</span>
+            <strong id="detWeight" style="font-size: 1rem;"></strong> kg
+          </div>
+          <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-subtle);">
+            <span class="form-label-custom">Registered By</span>
+            <strong id="detOwner" style="font-size: 1rem;"></strong>
+          </div>
+        </div>
 
-            const res = await fetch(`http://127.0.0.1:5000/api/ewaste/${ewasteId}`);
-            const data = await res.json();
+        <!-- 5-Stage Stepper -->
+        <span class="form-label-custom" style="margin-bottom: 1rem;">Chain of Custody Timeline</span>
+        <div style="display: flex; justify-content: space-between; position: relative;">
+          <div class="timeline-step">
+            <div id="dot-reg" class="timeline-dot">✓</div>
+            <small style="color: var(--text-muted); font-size: 0.75rem;">Registered</small>
+          </div>
+          <div class="timeline-step">
+            <div id="dot-col" class="timeline-dot">✓</div>
+            <small style="color: var(--text-muted); font-size: 0.75rem;">Collected</small>
+          </div>
+          <div class="timeline-step">
+            <div id="dot-trans" class="timeline-dot">✓</div>
+            <small style="color: var(--text-muted); font-size: 0.75rem;">In Transit</small>
+          </div>
+          <div class="timeline-step">
+            <div id="dot-rec" class="timeline-dot">✓</div>
+            <small style="color: var(--text-muted); font-size: 0.75rem;">Received</small>
+          </div>
+          <div class="timeline-step">
+            <div id="dot-fin" class="timeline-dot">✓</div>
+            <small style="color: var(--text-muted); font-size: 0.75rem;">Recycled</small>
+          </div>
+        </div>
+      </div>
 
-            if(!data.success) {
-                document.getElementById('loader').innerHTML = `<p class='text-danger'>${data.message}</p>`;
-                return;
-            }
+      <!-- Blockchain Transactions List -->
+      <div class="bento-card" style="grid-column: span 12;">
+        <span class="form-label-custom">Cryptographic Proofs & Block Receipts</span>
+        <div id="txList" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;"></div>
+      </div>
+    </div>
+  </div>
 
-            const item = data.item;
-            document.getElementById('loader').classList.add('d-none');
-            document.getElementById('content').classList.remove('d-none');
+  <script>
+    const ewasteId = new URLSearchParams(window.location.search).get('id');
 
-            document.getElementById('detId').innerText = item.ewasteId;
-            document.getElementById('detDevice').innerText = item.deviceType;
-            document.getElementById('detWeight').innerText = item.weight;
-            document.getElementById('detStatus').innerText = item.status;
+    async function loadTrackData() {
+      if(!ewasteId) return;
+      try {
+        const res = await fetch(`http://127.0.0.1:5000/api/ewaste/${ewasteId}`);
+        const data = await res.json();
+        if(!data.success) return;
 
-            // Highlight progress steps
-            const stages = ["REGISTERED", "COLLECTED", "IN TRANSIT", "RECEIVED", "RECYCLED"];
-            const currIdx = stages.indexOf(item.status);
-            const ids = ["st-reg", "st-col", "st-trans", "st-rec", "st-fin"];
+        const item = data.item;
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('trackContent').style.display = 'grid';
 
-            ids.forEach((elemId, idx) => {
-                if (idx <= currIdx) {
-                    document.getElementById(elemId).className = "step-circle step-active mx-auto mb-1";
-                }
-            });
+        document.getElementById('detId').innerText = item.ewasteId;
+        document.getElementById('detDevice').innerText = item.deviceType;
+        document.getElementById('detWeight').innerText = item.weight;
+        document.getElementById('detOwner').innerText = item.ownerName;
 
-            // Populate transaction history
-            const txList = document.getElementById('txList');
-            txList.innerHTML = "";
-            item.transactionHashes.forEach(tx => {
-                const li = document.createElement('li');
-                li.className = "list-group-item d-flex justify-content-between align-items-center";
-                li.innerHTML = `
-                    <span><strong>${tx.status}</strong><br><span class="text-muted" style="font-size:0.75rem;">${tx.hash}</span></span>
-                    <span class="badge bg-light text-dark">${tx.timestamp}</span>
-                `;
-                txList.appendChild(li);
-            });
-        }
+        const badge = document.getElementById('detStatusBadge');
+        badge.innerText = item.status;
+        badge.className = `status-badge ${item.status.toLowerCase().replace(" ", "")}`;
 
-        fetchDetails();
-    </script>
+        const stages = ["REGISTERED", "COLLECTED", "IN TRANSIT", "RECEIVED", "RECYCLED"];
+        const currIdx = stages.indexOf(item.status);
+        const dots = ["dot-reg", "dot-col", "dot-trans", "dot-rec", "dot-fin"];
+
+        dots.forEach((dotId, idx) => {
+          if(idx <= currIdx) document.getElementById(dotId).classList.add('active');
+        });
+
+        const txList = document.getElementById('txList');
+        txList.innerHTML = "";
+        item.transactionHashes.forEach(tx => {
+          const card = document.createElement('div');
+          card.style.background = "rgba(255,255,255,0.02)";
+          card.style.border = "1px solid var(--border-subtle)";
+          card.style.borderRadius = "10px";
+          card.style.padding = "0.75rem 1rem";
+          card.style.display = "flex";
+          card.style.justifyContent = "space-between";
+          card.style.alignItems = "center";
+
+          card.innerHTML = `
+            <div>
+              <span class="status-badge ${tx.status.toLowerCase().replace(" ", "")}" style="font-size:0.68rem; padding: 0.2rem 0.5rem; margin-bottom: 0.25rem;">${tx.status}</span>
+              <div class="mono-tag" style="margin-top:0.25rem; font-size:0.72rem;">${tx.hash}</div>
+            </div>
+            <div style="color: var(--text-muted); font-size: 0.75rem;">${tx.timestamp}</div>
+          `;
+          txList.appendChild(card);
+        });
+      } catch(err) {
+        document.getElementById('loader').innerText = "Failed to load chain data.";
+      }
+    }
+
+    loadTrackData();
+  </script>
 </body>
 </html>

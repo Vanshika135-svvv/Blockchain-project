@@ -1,60 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Collection Center Portal</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collection Hub | EcoChain</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-light">
-    <div class="container py-5" style="max-width: 600px;">
-        <a href="index.html" class="text-decoration-none text-muted mb-3 d-inline-block">&larr; Back to Home</a>
-        <div class="card shadow-sm p-4 border-0">
-            <h4 class="fw-bold mb-2">Collection Center Operations</h4>
-            <p class="text-muted small">Update custody of e-waste arriving from users or dispatching to transit.</p>
-            
-            <div class="mb-3">
-                <label class="form-label">E-Waste ID</label>
-                <input type="text" id="targetId" class="form-control" placeholder="e.g. EW-1718000000" required>
-            </div>
-            
-            <div class="d-grid gap-2">
-                <button class="btn btn-info text-white" onclick="updateStatus('COLLECTED')">Mark as COLLECTED</button>
-                <button class="btn btn-outline-info" onclick="updateStatus('IN TRANSIT')">Dispatch to IN TRANSIT</button>
-            </div>
-
-            <div id="statusRes" class="alert mt-3 d-none"></div>
-        </div>
+<body>
+  <nav class="navbar-custom">
+    <a href="index.html" class="brand-title">
+      <span class="brand-dot"></span>
+      EcoChain Protocol
+    </a>
+    <div class="nav-links">
+      <a href="user.html" class="nav-link-btn">User Portal</a>
+      <a href="collection.html" class="nav-link-btn active">Collection Hub</a>
+      <a href="recycler.html" class="nav-link-btn">Recycler Facility</a>
+      <a href="admin.html" class="nav-link-btn">Ledger Explorer</a>
     </div>
+  </nav>
 
-    <script>
-        async function updateStatus(newStatus) {
-            const id = document.getElementById('targetId').value.trim();
-            if(!id) return alert("Please enter a valid E-Waste ID");
+  <div class="bento-container" style="max-width: 650px;">
+    <div class="bento-card">
+      <span class="form-label-custom">Custody Ingestion</span>
+      <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem;">Collection Center Intake</h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Verify physical drop-off and transfer custody to transportation.</p>
 
-            const resDiv = document.getElementById('statusRes');
-            resDiv.className = "alert alert-secondary mt-3";
-            resDiv.innerText = `Recording '${newStatus}' on Blockchain...`;
-            resDiv.classList.remove('d-none');
+      <div style="margin-bottom: 1.25rem;">
+        <label class="form-label-custom">Target E-Waste ID</label>
+        <input type="text" id="targetId" class="form-control-custom" placeholder="e.g. EW-1793029669">
+      </div>
 
-            try {
-                const res = await fetch('http://127.0.0.1:5000/api/ewaste/update', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ ewasteId: id, status: newStatus })
-                });
-                const data = await res.json();
-                if(data.success) {
-                    resDiv.className = "alert alert-success mt-3";
-                    resDiv.innerHTML = `<strong>Success:</strong> Item updated to <b>${newStatus}</b>.<br><small class='text-truncate d-block'>Tx: ${data.txHash}</small>`;
-                } else {
-                    resDiv.className = "alert alert-danger mt-3";
-                    resDiv.innerText = "Error: " + data.error;
-                }
-            } catch(e) {
-                resDiv.className = "alert alert-danger mt-3";
-                resDiv.innerText = "Connection error. Is app.py running?";
-            }
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+        <button class="btn-bento-action btn-action-amber" onclick="updateStatus('COLLECTED')">Mark COLLECTED</button>
+        <button class="btn-bento-action btn-action-blue" onclick="updateStatus('IN TRANSIT')">Dispatch IN TRANSIT</button>
+      </div>
+
+      <div id="statusRes" style="display: none; padding: 1rem; border-radius: 10px; font-size: 0.85rem; margin-top: 1rem;"></div>
+    </div>
+  </div>
+
+  <script>
+    async function updateStatus(newStatus) {
+      const id = document.getElementById('targetId').value.trim();
+      if(!id) return alert("Please specify an E-Waste ID");
+
+      const resDiv = document.getElementById('statusRes');
+      resDiv.style.display = "block";
+      resDiv.style.background = "rgba(255,255,255,0.05)";
+      resDiv.style.color = "var(--text-main)";
+      resDiv.innerText = `Broadcasting state change to '${newStatus}'...`;
+
+      try {
+        const res = await fetch('http://127.0.0.1:5000/api/ewaste/update', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ ewasteId: id, status: newStatus })
+        });
+        const data = await res.json();
+        if(data.success) {
+          resDiv.style.background = "rgba(16, 185, 129, 0.15)";
+          resDiv.style.color = "var(--accent-green)";
+          resDiv.innerHTML = `<strong>Verified:</strong> State updated to <b>${newStatus}</b><br><span style='font-family: var(--font-mono); font-size: 0.72rem;'>Tx: ${data.txHash}</span>`;
+        } else {
+          resDiv.style.background = "rgba(239, 68, 68, 0.15)";
+          resDiv.style.color = "#f87171";
+          resDiv.innerText = "Error: " + data.error;
         }
-    </script>
+      } catch(e) {
+        resDiv.innerText = "Connection failed. Make sure app.py is running.";
+      }
+    }
+  </script>
 </body>
 </html>

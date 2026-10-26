@@ -1,93 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Admin Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ledger Explorer | EcoChain</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-light">
-    <div class="container py-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold">Ledger Overview & Impact Dashboard</h3>
-            <a href="index.html" class="btn btn-outline-secondary btn-sm">&larr; Home</a>
-        </div>
+<body>
+  <nav class="navbar-custom">
+    <a href="index.html" class="brand-title">
+      <span class="brand-dot"></span>
+      EcoChain Protocol
+    </a>
+    <div class="nav-links">
+      <a href="user.html" class="nav-link-btn">User Portal</a>
+      <a href="collection.html" class="nav-link-btn">Collection Hub</a>
+      <a href="recycler.html" class="nav-link-btn">Recycler Facility</a>
+      <a href="admin.html" class="nav-link-btn active">Ledger Explorer</a>
+    </div>
+  </nav>
 
-        <div class="row g-3 mb-4 text-center">
-            <div class="col-md-4">
-                <div class="card p-3 shadow-sm border-0">
-                    <small class="text-muted">Total Units Registered</small>
-                    <h2 id="totalCount" class="fw-bold text-dark mt-2">-</h2>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-3 shadow-sm border-0">
-                    <small class="text-muted">Total Weight Diverted</small>
-                    <h2 id="totalWeight" class="fw-bold text-success mt-2">- kg</h2>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-3 shadow-sm border-0">
-                    <small class="text-muted">Recycling Completed</small>
-                    <h2 id="totalRecycled" class="fw-bold text-primary mt-2">-</h2>
-                </div>
-            </div>
-        </div>
-
-        <div class="card shadow-sm border-0 p-3">
-            <h5 class="fw-bold mb-3">All Registered Items</h5>
-            <div class="table-responsive">
-                <table class="table table-hover table-bordered small">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>E-Waste ID</th>
-                            <th>Owner</th>
-                            <th>Device</th>
-                            <th>Weight (kg)</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody"></tbody>
-                </table>
-            </div>
-        </div>
+  <div class="bento-container">
+    <div style="margin-bottom: 2rem;">
+      <h1 style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em;">Protocol Ledger Analytics</h1>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">Real-time on-chain verifiable audit metrics.</p>
     </div>
 
-    <script>
-        async function loadAdminData() {
-            const res = await fetch('http://127.0.0.1:5000/api/ewaste/all');
-            const data = await res.json();
-            if(!data.success) return;
+    <!-- Bento Metrics Row -->
+    <div class="bento-grid" style="margin-bottom: 1.5rem;">
+      <div class="bento-card" style="grid-column: span 4;">
+        <span class="form-label-custom">Total Registered Assets</span>
+        <h2 id="totalCount" style="font-size: 2.25rem; font-weight: 800; margin-top: 0.5rem;">-</h2>
+      </div>
+      <div class="bento-card" style="grid-column: span 4;">
+        <span class="form-label-custom">Recovered Weight</span>
+        <h2 id="totalWeight" style="font-size: 2.25rem; font-weight: 800; color: var(--accent-green); margin-top: 0.5rem;">- kg</h2>
+      </div>
+      <div class="bento-card" style="grid-column: span 4;">
+        <span class="form-label-custom">Certified Recycled</span>
+        <h2 id="totalRecycled" style="font-size: 2.25rem; font-weight: 800; color: var(--accent-blue); margin-top: 0.5rem;">-</h2>
+      </div>
+    </div>
 
-            const items = data.items;
-            document.getElementById('totalCount').innerText = items.length;
-            
-            let weightSum = 0;
-            let recycledCount = 0;
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = "";
+    <!-- Ledger Table Bento -->
+    <div class="bento-card">
+      <span class="form-label-custom" style="margin-bottom: 1rem;">Complete Registry</span>
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); text-transform: uppercase; font-size: 0.72rem;">
+              <th style="padding: 0.75rem 1rem;">Asset ID</th>
+              <th style="padding: 0.75rem 1rem;">Owner</th>
+              <th style="padding: 0.75rem 1rem;">Device</th>
+              <th style="padding: 0.75rem 1rem;">Weight</th>
+              <th style="padding: 0.75rem 1rem;">Status</th>
+              <th style="padding: 0.75rem 1rem; text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-            items.forEach(item => {
-                weightSum += Number(item.weight || 0);
-                if(item.status === 'RECYCLED') recycledCount++;
+  <script>
+    async function loadAdminData() {
+      try {
+        const res = await fetch('http://127.0.0.1:5000/api/ewaste/all');
+        const data = await res.json();
+        if(!data.success) return;
 
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><code>${item.ewasteId}</code></td>
-                    <td>${item.ownerName}</td>
-                    <td>${item.deviceType}</td>
-                    <td>${item.weight}</td>
-                    <td><span class="badge bg-secondary">${item.status}</span></td>
-                    <td><a href="track.html?id=${item.ewasteId}" target="_blank" class="btn btn-sm btn-outline-primary">Track</a></td>
-                `;
-                tbody.appendChild(tr);
-            });
+        const items = data.items;
+        document.getElementById('totalCount').innerText = items.length;
 
-            document.getElementById('totalWeight').innerText = weightSum.toFixed(1) + " kg";
-            document.getElementById('totalRecycled').innerText = recycledCount;
-        }
+        let weightSum = 0;
+        let recycledCount = 0;
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = "";
 
-        loadAdminData();
-    </script>
+        items.forEach(item => {
+          weightSum += Number(item.weight || 0);
+          if(item.status === 'RECYCLED') recycledCount++;
+
+          const tr = document.createElement('tr');
+          tr.style.borderBottom = "1px solid rgba(255, 255, 255, 0.04)";
+          tr.innerHTML = `
+            <td style="padding: 1rem;"><span class="mono-tag">${item.ewasteId}</span></td>
+            <td style="padding: 1rem; font-weight: 500;">${item.ownerName}</td>
+            <td style="padding: 1rem;">${item.deviceType}</td>
+            <td style="padding: 1rem;">${item.weight} kg</td>
+            <td style="padding: 1rem;"><span class="status-badge ${item.status.toLowerCase().replace(" ", "")}">${item.status}</span></td>
+            <td style="padding: 1rem; text-align: right;"><a href="track.html?id=${item.ewasteId}" target="_blank" class="btn-bento-action btn-action-green" style="text-decoration: none; font-size: 0.75rem; padding: 0.35rem 0.75rem;">Verify</a></td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        document.getElementById('totalWeight').innerText = weightSum.toFixed(1) + " kg";
+        document.getElementById('totalRecycled').innerText = recycledCount;
+      } catch(err) {
+        console.error(err);
+      }
+    }
+
+    loadAdminData();
+  </script>
 </body>
 </html>
