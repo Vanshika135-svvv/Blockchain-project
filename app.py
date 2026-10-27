@@ -39,7 +39,7 @@ else:
     w3.eth.default_account = default_account
 
 # Contract Address loaded from environment
-contract_address = os.getenv("CONTRACT_ADDRESS", "0x5FbDB2315678afecb367f032d93F642f64180aa3")
+contract_address = os.getenv("CONTRACT_ADDRESS", "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9")
 
 # Full ABI for EWasteTracker.sol
 contract_abi = [
