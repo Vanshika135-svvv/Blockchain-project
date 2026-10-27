@@ -107,7 +107,8 @@
 
     async function loadUserData() {
       try {
-const res = await fetch(`${API_BASE_URL}/api/user/my-items?owner=${encodeURIComponent(currentUser.name)}`);        const data = await res.json();
+const res = await fetch(`http://127.0.0.1:5000/api/user/my-items?owner=${encodeURIComponent(currentUser.name)}`);
+  const data = await res.json();
         if(!data.success) return;
 
         const items = data.items;

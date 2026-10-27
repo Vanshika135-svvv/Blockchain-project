@@ -2,7 +2,6 @@ import base64
 import datetime
 from io import BytesIO
 import os
-import secrets
 import time
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
@@ -10,7 +9,6 @@ from flask_cors import CORS
 from pymongo import MongoClient
 import qrcode
 from web3 import Web3
-from werkzeug.security import check_password_hash, generate_password_hash
 
 # Load environment variables from .env file
 load_dotenv()
@@ -18,28 +16,19 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# 1. MongoDB Configuration
+# 1. MongoDB Setup using .env
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://127.0.0.1:27017/")
 client = MongoClient(MONGO_URI)
 db = client["ecochain"]
 ewaste_collection = db["ewaste"]
-users_collection = db["users"]
 
-# 2. Blockchain Setup (Supports Hardhat localhost and cloud RPCs like Sepolia)
-BLOCKCHAIN_RPC_URL = os.getenv("BLOCKCHAIN_RPC_URL", "http://127.0.0.1:8545")
-w3 = Web3(Web3.HTTPProvider(BLOCKCHAIN_RPC_URL))
+# 2. Blockchain Setup (Connecting to Hardhat node on port 8545)
+w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545"))
+default_account = w3.eth.accounts[0]
+w3.eth.default_account = default_account
 
-PRIVATE_KEY = os.getenv("PRIVATE_KEY")
-if PRIVATE_KEY:
-    account = w3.eth.account.from_key(PRIVATE_KEY)
-    default_account = account.address
-    w3.eth.default_account = default_account
-else:
-    default_account = w3.eth.accounts[0] if len(w3.eth.accounts) > 0 else None
-    w3.eth.default_account = default_account
-
-# Contract Address loaded from environment
-contract_address = os.getenv("CONTRACT_ADDRESS", "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9")
+# Contract Address loaded from .env
+contract_address = os.getenv("CONTRACT_ADDRESS", "0x5FbDB2315678afecb367f032d93F642f64180aa3")
 
 # Full ABI for EWasteTracker.sol
 contract_abi = [
@@ -176,24 +165,6 @@ contract_abi = [
 contract = w3.eth.contract(address=contract_address, abi=contract_abi)
 
 
-def send_transaction(func_call):
-    """Helper to send transactions handling both local nodes and private-key signing."""
-    if PRIVATE_KEY:
-        nonce = w3.eth.get_transaction_count(default_account)
-        tx = func_call.build_transaction({
-            'from': default_account,
-            'nonce': nonce,
-            'gasPrice': w3.eth.gas_price
-        })
-        signed_tx = w3.eth.account.sign_transaction(tx, private_key=PRIVATE_KEY)
-        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
-    else:
-        tx_hash = func_call.transact({'from': default_account})
-    
-    receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-    return receipt.transactionHash.hex()
-
-
 # ---------------- API ROUTES ----------------
 
 # 1. Register new e-waste item
@@ -206,12 +177,12 @@ def register_ewaste():
         weight_kg = float(data.get('weight', 1.0))
         weight_grams = int(weight_kg * 1000)
 
-        # Execute transaction on blockchain
-        blockchain_hash = send_transaction(
-            contract.functions.registerEWaste(ewaste_id, device_type, weight_grams)
-        )
+        # Execute on local Hardhat blockchain
+        tx_hash = contract.functions.registerEWaste(ewaste_id, device_type, weight_grams).transact()
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+        blockchain_hash = receipt.transactionHash.hex()
 
-        # Generate QR code for tracking asset
+        # QR code pointing to tracking timeline on port 5500
         qr_url = f"http://127.0.0.1:5500/track.html?id={ewaste_id}"
         qr = qrcode.make(qr_url)
         buffered = BytesIO()
@@ -251,17 +222,18 @@ def update_ewaste():
         new_status = data.get('status')
 
         if new_status == "COLLECTED":
-            call = contract.functions.collectEWaste(ewaste_id)
+            tx_hash = contract.functions.collectEWaste(ewaste_id).transact()
         elif new_status == "IN TRANSIT":
-            call = contract.functions.transferEWaste(ewaste_id)
+            tx_hash = contract.functions.transferEWaste(ewaste_id).transact()
         elif new_status == "RECEIVED":
-            call = contract.functions.receiveEWaste(ewaste_id)
+            tx_hash = contract.functions.receiveEWaste(ewaste_id).transact()
         elif new_status == "RECYCLED":
-            call = contract.functions.completeRecycling(ewaste_id)
+            tx_hash = contract.functions.completeRecycling(ewaste_id).transact()
         else:
-            call = contract.functions.updateStatus(ewaste_id, new_status)
+            tx_hash = contract.functions.updateStatus(ewaste_id, new_status).transact()
 
-        blockchain_hash = send_transaction(call)
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+        blockchain_hash = receipt.transactionHash.hex()
 
         ewaste_collection.update_one(
             {"ewasteId": ewaste_id},
@@ -342,8 +314,12 @@ def log_recycling_breakdown():
         ewaste_id = data.get('ewasteId')
         recovered_materials = data.get('materials', {})
 
-        blockchain_hash = send_transaction(contract.functions.completeRecycling(ewaste_id))
+        # Trigger smart contract completion on Ethereum
+        tx_hash = contract.functions.completeRecycling(ewaste_id).transact()
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+        blockchain_hash = receipt.transactionHash.hex()
 
+        # Update MongoDB with physical recovery yields
         ewaste_collection.update_one(
             {"ewasteId": ewaste_id},
             {
@@ -366,77 +342,5 @@ def log_recycling_breakdown():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-# 7. Authentication: Sign Up
-@app.route('/api/auth/register', methods=['POST'])
-def auth_register():
-    try:
-        data = request.json
-        name = data.get('name', '').strip()
-        email = data.get('email', '').strip().lower()
-        password = data.get('password', '')
-
-        if not name or not email or not password:
-            return jsonify({"success": False, "error": "All fields are required"}), 400
-
-        if users_collection.find_one({"email": email}):
-            return jsonify({"success": False, "error": "An account with this email already exists"}), 400
-
-        user_doc = {
-            "name": name,
-            "email": email,
-            "passwordHash": generate_password_hash(password),
-            "createdAt": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        users_collection.insert_one(user_doc)
-        token = secrets.token_hex(24)
-
-        return jsonify({
-            "success": True,
-            "token": token,
-            "user": {"name": name, "email": email}
-        }), 201
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
-# 8. Authentication: Log In
-@app.route('/api/auth/login', methods=['POST'])
-def auth_login():
-    try:
-        data = request.json
-        email = data.get('email', '').strip().lower()
-        password = data.get('password', '')
-
-        user = users_collection.find_one({"email": email})
-        if not user or not check_password_hash(user['passwordHash'], password):
-            return jsonify({"success": False, "error": "Invalid email or password"}), 401
-
-        token = secrets.token_hex(24)
-        return jsonify({
-            "success": True,
-            "token": token,
-            "user": {"name": user['name'], "email": user['email']}
-        }), 200
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
-# 9. User Dashboard Data: Get submissions by user
-@app.route('/api/user/my-items', methods=['GET'])
-def get_user_items():
-    try:
-        owner_name = request.args.get('owner', '').strip()
-        if not owner_name:
-            return jsonify({"success": False, "error": "Owner name is required"}), 400
-
-        items = list(ewaste_collection.find({"ownerName": {"$regex": f"^{owner_name}$", "$options": "i"}}))
-        for doc in items:
-            doc['_id'] = str(doc['_id'])
-        return jsonify({"success": True, "items": items}), 200
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
 if __name__ == '__main__':
-    # use_reloader=False prevents WinError 10038 socket crashes on Windows with Python 3.13
-    app.run(port=5000, debug=True, use_reloader=False)
+    app.run(port=5000, debug=True)

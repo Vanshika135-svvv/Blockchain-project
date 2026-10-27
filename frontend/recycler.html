@@ -89,7 +89,7 @@
       resDiv.innerText = "Broadcasting 'RECEIVED' event to blockchain...";
 
       try {
-        const res = await fetch('${API_BASE_URL}/api/ewaste/update', {
+        const res = await fetch('${http://127.0.0.1:5000}/api/ewaste/update', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ ewasteId: id, status: "RECEIVED" })
@@ -128,7 +128,7 @@
       };
 
       try {
-        const res = await fetch('${API_BASE_URL}/api/ewaste/recycle-breakdown', {
+        const res = await fetch('${http://127.0.0.1:5000}/api/ewaste/recycle-breakdown', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ ewasteId: id, materials })

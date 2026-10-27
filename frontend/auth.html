@@ -95,8 +95,8 @@
       const name = document.getElementById('authName').value.trim();
 
 const url = isLogin 
-  ? `${API_BASE_URL}/api/auth/login`
-  : `${API_BASE_URL}/api/auth/register`;
+  ? `${http://127.0.0.1:5000}/api/auth/login`
+  : `${http://127.0.0.1:5000}/api/auth/register`;
 
       const payload = isLogin ? { email, password } : { name, email, password };
 
