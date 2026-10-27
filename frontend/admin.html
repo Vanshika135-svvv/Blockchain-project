@@ -104,15 +104,15 @@
     <div class="bento-grid" style="margin-bottom: 1.5rem;">
       <div class="bento-card" style="grid-column: span 4;">
         <span class="form-label-custom">Total Registered Assets</span>
-        <h2 id="totalCount" style="font-size: 2.25rem; font-weight: 800; margin-top: 0.5rem;">-</h2>
+        <h2 id="totalCount" style="font-size: 2.25rem; font-weight: 800; margin-top: 0.5rem;">0</h2>
       </div>
       <div class="bento-card" style="grid-column: span 4;">
         <span class="form-label-custom">Recovered Weight</span>
-        <h2 id="totalWeight" style="font-size: 2.25rem; font-weight: 800; color: var(--accent-green); margin-top: 0.5rem;">- kg</h2>
+        <h2 id="totalWeight" style="font-size: 2.25rem; font-weight: 800; color: var(--accent-green); margin-top: 0.5rem;">0.0 kg</h2>
       </div>
       <div class="bento-card" style="grid-column: span 4;">
         <span class="form-label-custom">Certified Recycled</span>
-        <h2 id="totalRecycled" style="font-size: 2.25rem; font-weight: 800; color: var(--accent-blue); margin-top: 0.5rem;">-</h2>
+        <h2 id="totalRecycled" style="font-size: 2.25rem; font-weight: 800; color: var(--accent-blue); margin-top: 0.5rem;">0</h2>
       </div>
     </div>
 
@@ -146,64 +146,80 @@
               <th style="width: 12%; text-align: right;">Action</th>
             </tr>
           </thead>
-          <tbody id="tableBody"></tbody>
+          <tbody id="tableBody">
+            <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading ledger data...</td></tr>
+          </tbody>
         </table>
       </div>
     </div>
   </div>
-<script src="config.js"></script>
+
   <script>
+    const BACKEND_URL = "http://127.0.0.1:5000";
     let allItemsCache = [];
 
     async function loadAdminData() {
       const q = document.getElementById('filterQuery').value.trim();
       const statusSelect = document.getElementById('filterStatus');
       const selectedStatus = statusSelect.value;
+      const tbody = document.getElementById('tableBody');
 
       try {
-        // Fetch all items to keep metrics and dropdown badges accurate
-const fullRes = await fetch(`${http://127.0.0.1:5000}/api/ewaste/all`);        const fullData = await fullRes.json();
-        
-        if (fullData.success) {
+        // 1. Fetch all items for summary metrics
+        const fullRes = await fetch(`${BACKEND_URL}/api/ewaste/all`);
+        if (!fullRes.ok) {
+          throw new Error(`HTTP error! status: ${fullRes.status}`);
+        }
+        const fullData = await fullRes.json();
+
+        if (fullData.success && Array.isArray(fullData.items)) {
           allItemsCache = fullData.items;
           updateFilterBadges(allItemsCache, selectedStatus);
 
           document.getElementById('totalCount').innerText = allItemsCache.length;
+          
           let weightSum = 0;
           let recycledCount = 0;
+          
           allItemsCache.forEach(item => {
             weightSum += Number(item.weight || 0);
-            if (item.status === 'RECYCLED') recycledCount++;
+            if (item.status === 'RECYCLED') {
+              recycledCount++;
+            }
           });
+
           document.getElementById('totalWeight').innerText = weightSum.toFixed(1) + " kg";
           document.getElementById('totalRecycled').innerText = recycledCount;
         }
 
-        // Now fetch filtered results for the table
-const res = await fetch(`${http://127.0.0.1:5000}/api/ewaste/search?q=${encodeURIComponent(q)}&status=${encodeURIComponent(selectedStatus)}`);        const data = await res.json();
-        if(!data.success) return;
-
-        const items = data.items;
-        const tbody = document.getElementById('tableBody');
+        // 2. Fetch filtered results for the table
+        const searchUrl = `${BACKEND_URL}/api/ewaste/search?q=${encodeURIComponent(q)}&status=${encodeURIComponent(selectedStatus)}`;
+        const res = await fetch(searchUrl);
+        if (!res.ok) {
+          throw new Error(`Search request failed with status: ${res.status}`);
+        }
+        const data = await res.json();
+        
         tbody.innerHTML = "";
 
-        if(items.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No matching assets found for this filter.</td></tr>`;
+        if (!data.success || !Array.isArray(data.items) || data.items.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No matching assets found on ledger.</td></tr>`;
           return;
         }
 
-        items.forEach(item => {
+        data.items.forEach(item => {
           const tr = document.createElement('tr');
-          const statusKey = item.status.toLowerCase().replace(/\s+/g, '');
+          const rawStatus = item.status || 'REGISTERED';
+          const statusKey = rawStatus.toLowerCase().replace(/\s+/g, '');
 
           tr.innerHTML = `
-            <td><span class="mono-tag">${item.ewasteId}</span></td>
-            <td style="font-weight: 500;">${item.ownerName}</td>
-            <td>${item.deviceType}</td>
-            <td>${item.weight} kg</td>
-            <td><span class="status-badge ${statusKey}">${item.status}</span></td>
+            <td><span class="mono-tag">${item.ewasteId || 'N/A'}</span></td>
+            <td style="font-weight: 500;">${item.ownerName || 'Unknown'}</td>
+            <td>${item.deviceType || 'Device'}</td>
+            <td>${item.weight || 0} kg</td>
+            <td><span class="status-badge ${statusKey}">${rawStatus}</span></td>
             <td class="action-cell">
-              <a href="track.html?id=${item.ewasteId}" target="_blank" class="btn-verify">Verify Audit &rarr;</a>
+              <a href="track.html?id=${encodeURIComponent(item.ewasteId)}" target="_blank" class="btn-verify">Verify Audit &rarr;</a>
             </td>
           `;
           tbody.appendChild(tr);
@@ -211,6 +227,7 @@ const res = await fetch(`${http://127.0.0.1:5000}/api/ewaste/search?q=${encodeUR
 
       } catch(err) {
         console.error("Ledger fetch error:", err);
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ef4444; padding: 2rem;">Backend connection error. Make sure 'python app.py' is running on port 5000.</td></tr>`;
       }
     }
 
@@ -231,8 +248,8 @@ const res = await fetch(`${http://127.0.0.1:5000}/api/ewaste/search?q=${encodeUR
       `;
     }
 
-    // Initial Load
-    loadAdminData();
+    // Load data when page opens
+    window.addEventListener('DOMContentLoaded', loadAdminData);
   </script>
 </body>
 </html>

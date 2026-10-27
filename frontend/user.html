@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User Intake Portal | EcoChain Protocol</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .btn-bento-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  </style>
 </head>
 <body>
   <nav class="navbar-custom">
@@ -35,7 +41,7 @@
         <form id="regForm">
           <div style="margin-bottom: 1rem;">
             <label class="form-label-custom">Owner or Organization Name</label>
-            <input type="text" id="ownerName" class="form-control-custom" placeholder="e.g. Vanshika Tiwari" required>
+            <input type="text" id="ownerName" class="form-control-custom" placeholder="e.g. Alex Turner" required>
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
@@ -51,7 +57,7 @@
             </div>
             <div>
               <label class="form-label-custom">Net Weight (kg)</label>
-              <input type="number" step="0.1" id="weight" class="form-control-custom" placeholder="e.g. 2.4" required oninput="calcCarbon(this.value)">
+              <input type="number" step="0.1" id="weight" class="form-control-custom" placeholder="e.g. 2.5" required oninput="calcCarbon(this.value)">
             </div>
           </div>
 
@@ -105,8 +111,26 @@
       </div>
     </div>
   </div>
-<script src="config.js"></script>
+
+  <script src="config.js"></script>
   <script>
+    const BASE_URL = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : "http://127.0.0.1:5000";
+
+    // Auto-fill logged in user's name if present in localStorage
+    window.addEventListener('DOMContentLoaded', () => {
+      try {
+        const userStr = localStorage.getItem('ecochain_user');
+        if (userStr) {
+          const userObj = JSON.parse(userStr);
+          if (userObj.name) {
+            document.getElementById('ownerName').value = userObj.name;
+          }
+        }
+      } catch (err) {
+        console.warn("Could not read stored user session", err);
+      }
+    });
+
     function calcCarbon(val) {
       const kg = parseFloat(val) || 0;
       const saved = (kg * 1.44).toFixed(2);
@@ -120,31 +144,53 @@
       btn.innerText = "Broadcasting to Ethereum...";
 
       const payload = {
-        ownerName: document.getElementById('ownerName').value,
+        ownerName: document.getElementById('ownerName').value.trim(),
         deviceType: document.getElementById('deviceType').value,
-        weight: document.getElementById('weight').value,
-        condition: document.getElementById('condition').value
+        weight: parseFloat(document.getElementById('weight').value) || 0,
+        condition: document.getElementById('condition').value.trim()
       };
 
       try {
-const res = await fetch(`${http://127.0.0.1:5000}/api/ewaste/register`, {          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+        const res = await fetch(`${BASE_URL}/api/ewaste/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
+
         const data = await res.json();
-        if(data.success) {
+
+        if (res.ok && data.success && data.item) {
           document.getElementById('regForm').reset();
+          calcCarbon(0);
+
           document.getElementById('qrPlaceholder').style.display = 'none';
           document.getElementById('receiptBox').style.display = 'block';
-          document.getElementById('outId').innerText = data.item.ewasteId;
-          document.getElementById('outHash').innerText = "Tx: " + data.item.transactionHashes[0].hash;
-          document.getElementById('outQr').src = data.item.qrCodeDataURL;
-          document.getElementById('trackLink').href = `track.html?id=${data.item.ewasteId}`;
+          document.getElementById('outId').innerText = data.item.ewasteId || 'N/A';
+
+          // Safe extraction of genesis transaction hash
+          let genesisHash = "Genesis State Mined";
+          if (Array.isArray(data.item.transactionHashes) && data.item.transactionHashes.length > 0) {
+            const entry = data.item.transactionHashes[0];
+            genesisHash = (typeof entry === 'object' && entry.hash) ? entry.hash : String(entry);
+          } else if (data.txHash) {
+            genesisHash = data.txHash;
+          }
+          document.getElementById('outHash').innerText = `Tx: ${genesisHash}`;
+
+          // Set QR image (or standard QR fallback)
+          if (data.item.qrCodeDataURL) {
+            document.getElementById('outQr').src = data.item.qrCodeDataURL;
+          } else {
+            document.getElementById('outQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(data.item.ewasteId)}`;
+          }
+
+          document.getElementById('trackLink').href = `track.html?id=${encodeURIComponent(data.item.ewasteId)}`;
         } else {
-          alert("Error: " + data.error);
+          alert("Registration Error: " + (data.error || "Unable to mint asset on blockchain."));
         }
       } catch (err) {
-        alert("Server connection failed. Is app.py active?");
+        console.error("Registration failed:", err);
+        alert("Server connection failed. Make sure 'python app.py' is running on port 5000.");
       } finally {
         btn.disabled = false;
         btn.innerText = "Sign & Broadcast Genesis Block";

@@ -5,6 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recycler Facility | EcoChain Protocol</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .btn-bento-action:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-verify {
+      display: inline-block;
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.45rem 0.9rem;
+      border-radius: 8px;
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--accent-green);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      transition: all 0.2s ease;
+    }
+    .btn-verify:hover {
+      background: rgba(16, 185, 129, 0.35);
+    }
+  </style>
 </head>
 <body>
   <nav class="navbar-custom">
@@ -38,7 +59,7 @@
         <label class="form-label-custom">Target Asset Identifier</label>
         <div style="display: flex; gap: 0.75rem;">
           <input type="text" id="targetId" class="form-control-custom" placeholder="e.g. EW-1793029669">
-          <button class="btn-bento-action btn-action-blue" onclick="acknowledgeReceipt()" style="white-space: nowrap;">
+          <button id="btnAcknowledge" class="btn-bento-action btn-action-blue" onclick="acknowledgeReceipt()" style="white-space: nowrap;">
             Acknowledge Arrival (RECEIVED)
           </button>
         </div>
@@ -68,7 +89,7 @@
       </div>
 
       <!-- Execution Button -->
-      <button class="btn-bento-action btn-action-green" onclick="finalizeRecycling()" style="width: 100%; padding: 1rem; font-size: 1rem;">
+      <button id="btnFinalize" class="btn-bento-action btn-action-green" onclick="finalizeRecycling()" style="width: 100%; padding: 1rem; font-size: 1rem;">
         Certify RECYCLED & Seal Cryptographic Chain ✓
       </button>
 
@@ -76,50 +97,60 @@
       <div id="statusRes" style="display: none; padding: 1.25rem; border-radius: 10px; font-size: 0.85rem; margin-top: 1.25rem;"></div>
     </div>
   </div>
-<script src="config.js"></script>
+
+  <script src="config.js"></script>
   <script>
+    const BASE_URL = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : "http://127.0.0.1:5000";
+
     async function acknowledgeReceipt() {
       const id = document.getElementById('targetId').value.trim();
-      if(!id) return alert("Please specify an Asset ID");
+      if (!id) return alert("Please specify an Asset ID");
 
       const resDiv = document.getElementById('statusRes');
+      const btn = document.getElementById('btnAcknowledge');
+
+      btn.disabled = true;
       resDiv.style.display = "block";
       resDiv.style.background = "rgba(255,255,255,0.03)";
       resDiv.style.color = "var(--text-main)";
-      resDiv.innerText = "Broadcasting 'RECEIVED' event to blockchain...";
+      resDiv.innerText = "Broadcasting 'RECEIVED' event to Ethereum blockchain...";
 
       try {
-        const res = await fetch('${http://127.0.0.1:5000}/api/ewaste/update', {
+        const res = await fetch(`${BASE_URL}/api/ewaste/update`, {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ewasteId: id, status: "RECEIVED" })
         });
         const data = await res.json();
-        if(data.success) {
+
+        if (res.ok && data.success) {
           resDiv.style.background = "rgba(56, 189, 248, 0.15)";
           resDiv.style.color = "var(--accent-blue)";
           resDiv.innerHTML = `
-            <strong>Receipt Mined:</strong> Asset status updated to <b>RECEIVED</b>.<br>
-            <span class="mono-tag" style="margin-top:0.4rem; display:inline-block;">Tx: ${data.txHash}</span>
+            <strong>Receipt Mined:</strong> Asset status successfully updated to <b>RECEIVED</b>.<br>
+            <span class="mono-tag" style="margin-top:0.4rem; display:inline-block;">Tx: ${data.txHash || 'Mined On-Chain'}</span>
           `;
         } else {
+          resDiv.style.background = "rgba(239, 68, 68, 0.15)";
           resDiv.style.color = "#f87171";
-          resDiv.innerText = "Error: " + data.error;
+          resDiv.innerText = "Error: " + (data.error || "Failed to update status. Ensure item is IN TRANSIT first.");
         }
       } catch (e) {
-        resDiv.innerText = "Connection failed. Make sure app.py is running.";
+        console.error("Receipt error:", e);
+        resDiv.style.background = "rgba(239, 68, 68, 0.15)";
+        resDiv.style.color = "#f87171";
+        resDiv.innerText = "Connection failed. Make sure 'python app.py' is running on port 5000.";
+      } finally {
+        btn.disabled = false;
       }
     }
 
     async function finalizeRecycling() {
       const id = document.getElementById('targetId').value.trim();
-      if(!id) return alert("Please specify an Asset ID");
+      if (!id) return alert("Please specify an Asset ID");
 
       const resDiv = document.getElementById('statusRes');
-      resDiv.style.display = "block";
-      resDiv.style.background = "rgba(255,255,255,0.03)";
-      resDiv.style.color = "var(--text-main)";
-      resDiv.innerText = "Submitting physical recovery proof & final smart contract seal...";
+      const btn = document.getElementById('btnFinalize');
 
       const materials = {
         copper_g: Number(document.getElementById('matCopper').value) || 0,
@@ -127,31 +158,53 @@
         precious_mg: Number(document.getElementById('matPrecious').value) || 0
       };
 
+      btn.disabled = true;
+      resDiv.style.display = "block";
+      resDiv.style.background = "rgba(255,255,255,0.03)";
+      resDiv.style.color = "var(--text-main)";
+      resDiv.innerText = "Submitting physical recovery proof & final smart contract seal...";
+
       try {
-        const res = await fetch('${http://127.0.0.1:5000}/api/ewaste/recycle-breakdown', {
+        const res = await fetch(`${BASE_URL}/api/ewaste/recycle-breakdown`, {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ewasteId: id, materials })
         });
         const data = await res.json();
-        if(data.success) {
+
+        if (res.ok && data.success) {
           resDiv.style.background = "rgba(16, 185, 129, 0.15)";
           resDiv.style.color = "var(--accent-green)";
           resDiv.innerHTML = `
             <strong>Lifecycle Finalized:</strong> Asset certified as <b>RECYCLED</b> on-chain.<br>
-            <span class="mono-tag" style="margin-top:0.4rem; display:inline-block;">Tx: ${data.txHash}</span>
+            <span class="mono-tag" style="margin-top:0.4rem; display:inline-block;">Tx: ${data.txHash || 'Mined On-Chain'}</span>
             <div style="margin-top: 0.75rem;">
-              <a href="track.html?id=${id}" target="_blank" class="btn-verify">Inspect Final Verification Certificate &rarr;</a>
+              <a href="track.html?id=${encodeURIComponent(id)}" target="_blank" class="btn-verify">Inspect Final Verification Certificate &rarr;</a>
             </div>
           `;
         } else {
+          resDiv.style.background = "rgba(239, 68, 68, 0.15)";
           resDiv.style.color = "#f87171";
-          resDiv.innerText = "Error: " + data.error;
+          resDiv.innerText = "Error: " + (data.error || "Failed to certify recycling. Ensure item was marked RECEIVED first.");
         }
       } catch (e) {
-        resDiv.innerText = "Connection failed. Make sure app.py is running.";
+        console.error("Recycling error:", e);
+        resDiv.style.background = "rgba(239, 68, 68, 0.15)";
+        resDiv.style.color = "#f87171";
+        resDiv.innerText = "Connection failed. Make sure 'python app.py' is running on port 5000.";
+      } finally {
+        btn.disabled = false;
       }
     }
+
+    // Auto-fill Asset ID if passed in the URL (e.g. recycler.html?id=EW-...)
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const urlId = params.get('id');
+      if (urlId) {
+        document.getElementById('targetId').value = urlId;
+      }
+    });
   </script>
 </body>
 </html>

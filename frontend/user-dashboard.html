@@ -23,6 +23,23 @@
       padding: 1rem;
       border-bottom: 1px solid rgba(255, 255, 255, 0.04);
       text-align: left;
+      vertical-align: middle;
+    }
+    .btn-verify {
+      display: inline-block;
+      text-decoration: none;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.35rem 0.8rem;
+      border-radius: 8px;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .btn-verify:hover {
+      background: rgba(16, 185, 129, 0.25);
     }
   </style>
 </head>
@@ -89,15 +106,27 @@
       </div>
     </div>
   </div>
-<script src="config.js"></script>
+
+  <script src="config.js"></script>
   <script>
-    const userStr = localStorage.getItem('ecochain_user');
-    if (!userStr) {
-      window.location.href = 'auth.html';
+    const BASE_URL = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : "http://127.0.0.1:5000";
+
+    // Safe session extraction
+    let currentUser = null;
+    try {
+      const userStr = localStorage.getItem('ecochain_user');
+      if (userStr) {
+        currentUser = JSON.parse(userStr);
+      }
+    } catch (e) {
+      console.error("Session parse error:", e);
     }
 
-    const currentUser = JSON.parse(userStr);
-    document.getElementById('welcomeUser').innerText = `Welcome, ${currentUser.name}`;
+    if (!currentUser || !currentUser.name) {
+      window.location.href = 'auth.html';
+    } else {
+      document.getElementById('welcomeUser').innerText = `Welcome back, ${currentUser.name}`;
+    }
 
     function logout() {
       localStorage.removeItem('ecochain_user');
@@ -106,36 +135,48 @@
     }
 
     async function loadUserData() {
+      const tbody = document.getElementById('userTableBody');
+      if (!currentUser || !currentUser.name) return;
+
       try {
-const res = await fetch(`http://127.0.0.1:5000/api/user/my-items?owner=${encodeURIComponent(currentUser.name)}`);
-  const data = await res.json();
-        if(!data.success) return;
+        const queryUrl = `${BASE_URL}/api/user/my-items?owner=${encodeURIComponent(currentUser.name)}`;
+        const res = await fetch(queryUrl);
+        
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: Failed to fetch items`);
+        }
+        
+        const data = await res.json();
+        if (!data.success || !Array.isArray(data.items)) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No items registered under ${currentUser.name} yet. <a href="user.html" style="color: var(--accent-green); text-decoration: underline;">Register an item</a></td></tr>`;
+          return;
+        }
 
         const items = data.items;
         document.getElementById('myItemsCount').innerText = items.length;
 
         let totalW = 0;
-        const tbody = document.getElementById('userTableBody');
         tbody.innerHTML = "";
 
-        if(items.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No items registered under ${currentUser.name} yet. <a href="user.html" style="color: var(--accent-green);">Register an item</a></td></tr>`;
+        if (items.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No items registered under ${currentUser.name} yet. <a href="user.html" style="color: var(--accent-green); text-decoration: underline;">Register an item</a></td></tr>`;
           return;
         }
 
         items.forEach(item => {
           const w = Number(item.weight || 0);
           totalW += w;
-          const statusClass = item.status.toLowerCase().replace(/\s+/g, '');
+          const rawStatus = item.status || 'REGISTERED';
+          const statusClass = rawStatus.toLowerCase().replace(/\s+/g, '');
 
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td><span class="mono-tag">${item.ewasteId}</span></td>
-            <td style="font-weight: 500;">${item.deviceType}</td>
-            <td>${item.weight} kg</td>
-            <td><span class="status-badge ${statusClass}">${item.status}</span></td>
+            <td><span class="mono-tag">${item.ewasteId || 'N/A'}</span></td>
+            <td style="font-weight: 500;">${item.deviceType || 'Unknown Device'}</td>
+            <td>${w} kg</td>
+            <td><span class="status-badge ${statusClass}">${rawStatus}</span></td>
             <td style="text-align: right;">
-              <a href="track.html?id=${item.ewasteId}" target="_blank" class="btn-verify">Timeline &rarr;</a>
+              <a href="track.html?id=${encodeURIComponent(item.ewasteId)}" target="_blank" class="btn-verify">Timeline &rarr;</a>
             </td>
           `;
           tbody.appendChild(tr);
@@ -143,12 +184,14 @@ const res = await fetch(`http://127.0.0.1:5000/api/user/my-items?owner=${encodeU
 
         document.getElementById('myTotalWeight').innerText = `${totalW.toFixed(1)} kg`;
         document.getElementById('myCarbonSaved').innerText = `${(totalW * 1.44).toFixed(1)} kg`;
+
       } catch (e) {
-        console.error(e);
+        console.error("Dashboard error:", e);
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #ef4444; padding: 2rem;">Could not connect to Flask backend. Verify 'python app.py' is running on port 5000.</td></tr>`;
       }
     }
 
-    loadUserData();
+    window.addEventListener('DOMContentLoaded', loadUserData);
   </script>
 </body>
 </html>

@@ -6,15 +6,36 @@
   <title>Lifecycle Verification | EcoChain</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    .timeline-step { flex: 1; text-align: center; position: relative; }
+    .timeline-step { 
+      flex: 1; 
+      text-align: center; 
+      position: relative; 
+    }
     .timeline-dot {
-      width: 28px; height: 28px; border-radius: 50%; background: rgba(255, 255, 255, 0.1);
-      border: 1px solid var(--border-subtle); margin: 0 auto 0.5rem auto; display: flex;
-      align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(--text-muted);
+      width: 28px; 
+      height: 28px; 
+      border-radius: 50%; 
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border-subtle); 
+      margin: 0 auto 0.5rem auto; 
+      display: flex;
+      align-items: center; 
+      justify-content: center; 
+      font-size: 0.75rem; 
+      font-weight: 700; 
+      color: var(--text-muted);
+      transition: all 0.3s ease;
     }
     .timeline-dot.active {
-      background: var(--accent-green); border-color: var(--accent-green); color: #042f1a;
+      background: var(--accent-green); 
+      border-color: var(--accent-green); 
+      color: #042f1a;
       box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+    }
+    .search-bar-wrap {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
     }
   </style>
 </head>
@@ -22,38 +43,54 @@
   <nav class="navbar-custom">
     <a href="index.html" class="brand-title"><span class="brand-dot"></span> EcoChain Protocol</a>
     <div class="nav-links">
+      <a href="user.html" class="nav-link-btn">User Intake</a>
+      <a href="collection.html" class="nav-link-btn">Collection Hub</a>
+      <a href="recycler.html" class="nav-link-btn">Recycler Facility</a>
       <a href="admin.html" class="nav-link-btn">Ledger Explorer</a>
     </div>
   </nav>
 
   <div class="bento-container" style="max-width: 900px;">
-    <div id="loader" style="text-align: center; padding: 4rem 0;">
+    <!-- Manual Search Option -->
+    <div class="bento-card" style="margin-bottom: 1.5rem;">
+      <span class="form-label-custom">Verify Asset On-Chain</span>
+      <form onsubmit="event.preventDefault(); manualSearch();" class="search-bar-wrap">
+        <input type="text" id="manualIdInput" class="form-control-custom" placeholder="Scan or enter Asset ID (e.g. EW-1793029669)">
+        <button type="submit" class="btn-bento-action btn-action-green" style="white-space: nowrap; padding: 0.75rem 1.4rem;">
+          Verify Lifecycle &rarr;
+        </button>
+      </form>
+    </div>
+
+    <!-- Status Loading Message -->
+    <div id="loader" style="text-align: center; padding: 3rem 0; display: none;">
       <p style="color: var(--text-muted);">Querying Ethereum ledger roots...</p>
     </div>
 
+    <!-- Verification Details Bento -->
     <div id="trackContent" style="display: none;" class="bento-grid">
       <!-- Overview Card -->
       <div class="bento-card" style="grid-column: span 12;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
           <div>
             <span class="form-label-custom">Verified Identifier</span>
-            <h2 id="detId" class="mono-tag" style="font-size: 1.25rem;"></h2>
+            <h2 id="detId" class="mono-tag" style="font-size: 1.25rem;">-</h2>
           </div>
-          <span id="detStatusBadge" class="status-badge registered"></span>
+          <span id="detStatusBadge" class="status-badge registered">-</span>
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem;">
           <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-subtle);">
             <span class="form-label-custom">Device</span>
-            <strong id="detDevice"></strong>
+            <strong id="detDevice">-</strong>
           </div>
           <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-subtle);">
             <span class="form-label-custom">Weight</span>
-            <strong id="detWeight"></strong> kg
+            <strong id="detWeight">-</strong> kg
           </div>
           <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-subtle);">
             <span class="form-label-custom">Registered By</span>
-            <strong id="detOwner"></strong>
+            <strong id="detOwner">-</strong>
           </div>
         </div>
 
@@ -83,21 +120,21 @@
         </div>
       </div>
 
-      <!-- Recovered Materials Card (Only appears if recycler logged material breakdown) -->
+      <!-- Recovered Materials Card -->
       <div id="materialCard" class="bento-card" style="grid-column: span 12; display: none;">
         <span class="form-label-custom" style="color: var(--accent-green);">Certified Material Recovery Yields</span>
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 0.75rem;">
           <div style="background: rgba(16, 185, 129, 0.05); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.2);">
             <span class="form-label-custom">Recovered Copper</span>
-            <strong id="yieldCopper" style="color: var(--accent-green); font-size: 1.1rem;">-</strong> g
+            <strong id="yieldCopper" style="color: var(--accent-green); font-size: 1.1rem;">0</strong> g
           </div>
           <div style="background: rgba(16, 185, 129, 0.05); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.2);">
             <span class="form-label-custom">Recovered Plastic</span>
-            <strong id="yieldPlastic" style="color: var(--accent-green); font-size: 1.1rem;">-</strong> g
+            <strong id="yieldPlastic" style="color: var(--accent-green); font-size: 1.1rem;">0</strong> g
           </div>
           <div style="background: rgba(16, 185, 129, 0.05); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.2);">
             <span class="form-label-custom">Precious Metals</span>
-            <strong id="yieldPrecious" style="color: var(--accent-green); font-size: 1.1rem;">-</strong> mg
+            <strong id="yieldPrecious" style="color: var(--accent-green); font-size: 1.1rem;">0</strong> mg
           </div>
         </div>
       </div>
@@ -109,73 +146,130 @@
       </div>
     </div>
   </div>
-<script src="config.js"></script>
+
+  <script src="config.js"></script>
   <script>
-    const ewasteId = new URLSearchParams(window.location.search).get('id');
+    const BASE_URL = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : "http://127.0.0.1:5000";
+
+    function manualSearch() {
+      const val = document.getElementById('manualIdInput').value.trim();
+      if (!val) return alert("Please enter an Asset ID");
+      window.location.search = `?id=${encodeURIComponent(val)}`;
+    }
 
     async function loadTrackData() {
-      if(!ewasteId) return;
+      const urlParams = new URLSearchParams(window.location.search);
+      const ewasteId = urlParams.get('id');
+
+      if (!ewasteId) {
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('loader').innerHTML = `<p style="color: var(--text-muted);">Please enter an Asset ID above or scan an EcoChain QR code.</p>`;
+        return;
+      }
+
+      document.getElementById('manualIdInput').value = ewasteId;
+      const loader = document.getElementById('loader');
+      const trackContent = document.getElementById('trackContent');
+      
+      loader.style.display = 'block';
+      loader.innerHTML = `<p style="color: var(--text-muted);">Querying Ethereum ledger roots for ${ewasteId}...</p>`;
+      trackContent.style.display = 'none';
+
       try {
-        const res = await fetch(`${http://127.0.0.1:5000}/api/ewaste/${ewasteId}`);
+        const res = await fetch(`${BASE_URL}/api/ewaste/${encodeURIComponent(ewasteId)}`);
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         const data = await res.json();
-        if(!data.success) return;
+
+        if (!data.success || !data.item) {
+          loader.innerHTML = `<p style="color: #ef4444;">Asset '${ewasteId}' not found on-chain or in records.</p>`;
+          return;
+        }
 
         const item = data.item;
-        document.getElementById('loader').style.display = 'none';
-        document.getElementById('trackContent').style.display = 'grid';
+        loader.style.display = 'none';
+        trackContent.style.display = 'grid';
 
-        document.getElementById('detId').innerText = item.ewasteId;
-        document.getElementById('detDevice').innerText = item.deviceType;
-        document.getElementById('detWeight').innerText = item.weight;
-        document.getElementById('detOwner').innerText = item.ownerName;
+        document.getElementById('detId').innerText = item.ewasteId || ewasteId;
+        document.getElementById('detDevice').innerText = item.deviceType || "Device";
+        document.getElementById('detWeight').innerText = item.weight || 0;
+        document.getElementById('detOwner').innerText = item.ownerName || "Unknown";
 
+        const currentStatus = item.status || "REGISTERED";
         const badge = document.getElementById('detStatusBadge');
-        badge.innerText = item.status;
-        badge.className = `status-badge ${item.status.toLowerCase().replace(" ", "")}`;
+        badge.innerText = currentStatus;
+        badge.className = `status-badge ${currentStatus.toLowerCase().replace(/\s+/g, "")}`;
 
+        // Reset and activate timeline dots
         const stages = ["REGISTERED", "COLLECTED", "IN TRANSIT", "RECEIVED", "RECYCLED"];
-        const currIdx = stages.indexOf(item.status);
+        const currIdx = stages.indexOf(currentStatus);
         const dots = ["dot-reg", "dot-col", "dot-trans", "dot-rec", "dot-fin"];
 
         dots.forEach((dotId, idx) => {
-          if(idx <= currIdx) document.getElementById(dotId).classList.add('active');
+          const el = document.getElementById(dotId);
+          if (idx <= currIdx && currIdx !== -1) {
+            el.classList.add('active');
+          } else {
+            el.classList.remove('active');
+          }
         });
 
-        // Show recovered materials if present
-        if(item.recoveredMaterials) {
-          document.getElementById('materialCard').style.display = 'block';
-          document.getElementById('yieldCopper').innerText = item.recoveredMaterials.copper_g || 0;
-          document.getElementById('yieldPlastic').innerText = item.recoveredMaterials.plastic_g || 0;
-          document.getElementById('yieldPrecious').innerText = item.recoveredMaterials.precious_mg || 0;
+        // Show recovered materials breakdown if present
+        const matCard = document.getElementById('materialCard');
+        if (item.recoveredMaterials) {
+          matCard.style.display = 'block';
+          document.getElementById('yieldCopper').innerText = item.recoveredMaterials.copper_g ?? 0;
+          document.getElementById('yieldPlastic').innerText = item.recoveredMaterials.plastic_g ?? 0;
+          document.getElementById('yieldPrecious').innerText = item.recoveredMaterials.precious_mg ?? 0;
+        } else {
+          matCard.style.display = 'none';
         }
 
+        // Render transaction hashes safely
         const txList = document.getElementById('txList');
         txList.innerHTML = "";
-        item.transactionHashes.forEach(tx => {
-          const card = document.createElement('div');
-          card.style.background = "rgba(255,255,255,0.02)";
-          card.style.border = "1px solid var(--border-subtle)";
-          card.style.borderRadius = "10px";
-          card.style.padding = "0.75rem 1rem";
-          card.style.display = "flex";
-          card.style.justifyContent = "space-between";
-          card.style.alignItems = "center";
+        
+        let txArray = [];
+        if (Array.isArray(item.transactionHashes)) {
+          txArray = item.transactionHashes;
+        } else if (item.txHash) {
+          txArray = [{ status: currentStatus, hash: item.txHash, timestamp: "Mined On-Chain" }];
+        }
 
-          card.innerHTML = `
-            <div>
-              <span class="status-badge ${tx.status.toLowerCase().replace(" ", "")}" style="font-size:0.68rem; padding: 0.2rem 0.5rem; margin-bottom: 0.25rem;">${tx.status}</span>
-              <div class="mono-tag" style="margin-top:0.25rem; font-size:0.72rem;">${tx.hash}</div>
-            </div>
-            <div style="color: var(--text-muted); font-size: 0.75rem;">${tx.timestamp}</div>
-          `;
-          txList.appendChild(card);
-        });
+        if (txArray.length === 0) {
+          txList.innerHTML = `<div style="color: var(--text-muted); font-size: 0.85rem; padding: 1rem 0;">Genesis state confirmed on ledger.</div>`;
+        } else {
+          txArray.forEach(tx => {
+            const card = document.createElement('div');
+            card.style.background = "rgba(255,255,255,0.02)";
+            card.style.border = "1px solid var(--border-subtle)";
+            card.style.borderRadius = "10px";
+            card.style.padding = "0.75rem 1rem";
+            card.style.display = "flex";
+            card.style.justifyContent = "space-between";
+            card.style.alignItems = "center";
+
+            const txStatus = (typeof tx === 'object' && tx.status) ? tx.status : currentStatus;
+            const txHash = (typeof tx === 'object' && tx.hash) ? tx.hash : String(tx);
+            const txTime = (typeof tx === 'object' && tx.timestamp) ? tx.timestamp : "Confirmed";
+
+            card.innerHTML = `
+              <div>
+                <span class="status-badge ${txStatus.toLowerCase().replace(/\s+/g, "")}" style="font-size:0.68rem; padding: 0.2rem 0.5rem; margin-bottom: 0.25rem;">${txStatus}</span>
+                <div class="mono-tag" style="margin-top:0.25rem; font-size:0.72rem; word-break: break-all;">${txHash}</div>
+              </div>
+              <div style="color: var(--text-muted); font-size: 0.75rem; white-space: nowrap; margin-left: 1rem;">${txTime}</div>
+            `;
+            txList.appendChild(card);
+          });
+        }
       } catch(err) {
-        document.getElementById('loader').innerText = "Failed to load chain data.";
+        console.error("Tracking render error:", err);
+        loader.style.display = 'block';
+        loader.innerHTML = `<p style="color: #ef4444;">Failed to load chain data. Ensure 'python app.py' is running on port 5000.</p>`;
       }
     }
 
-    loadTrackData();
+    window.addEventListener('DOMContentLoaded', loadTrackData);
   </script>
 </body>
 </html>

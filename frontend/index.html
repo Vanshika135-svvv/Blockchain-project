@@ -120,11 +120,11 @@
       EcoChain Protocol
     </a>
     <div class="nav-links">
-    <a href="user.html" class="nav-link-btn">User Intake</a>
-    <a href="collection.html" class="nav-link-btn">Collection Hub</a>
-    <a href="recycler.html" class="nav-link-btn">Recycler Facility</a>
-    <a href="admin.html" class="nav-link-btn">Ledger Explorer</a>
-    <a href="auth.html" class="btn-bento-action btn-action-green" style="padding: 0.4rem 0.85rem; font-size: 0.85rem; text-decoration: none;">Account / Login</a>
+      <a href="user.html" class="nav-link-btn">User Intake</a>
+      <a href="collection.html" class="nav-link-btn">Collection Hub</a>
+      <a href="recycler.html" class="nav-link-btn">Recycler Facility</a>
+      <a href="admin.html" class="nav-link-btn">Ledger Explorer</a>
+      <a href="auth.html" class="btn-bento-action btn-action-green" style="padding: 0.4rem 0.85rem; font-size: 0.85rem; text-decoration: none;">Account / Login</a>
     </div>
   </nav>
 
@@ -144,12 +144,12 @@
           </p>
 
           <!-- Direct Audit Quick Input -->
-          <div style="display: flex; gap: 0.75rem; max-width: 580px;">
+          <form onsubmit="event.preventDefault(); quickTrack();" style="display: flex; gap: 0.75rem; max-width: 580px;">
             <input type="text" id="quickId" class="form-control-custom" placeholder="Verify Asset ID (e.g. EW-1793029669)">
-            <button class="btn-bento-action btn-action-green" onclick="quickTrack()" style="white-space: nowrap; padding: 0.85rem 1.4rem;">
+            <button type="submit" class="btn-bento-action btn-action-green" style="white-space: nowrap; padding: 0.85rem 1.4rem;">
               Audit Asset &rarr;
             </button>
-          </div>
+          </form>
         </div>
       </div>
 
@@ -160,21 +160,21 @@
           
           <div style="margin: 1.5rem 0;">
             <span style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Total On-Chain Assets</span>
-            <h2 id="homeTotalAssets" style="font-size: 2.2rem; font-weight: 800; margin-top: 0.25rem;">-</h2>
+            <h2 id="homeTotalAssets" style="font-size: 2.2rem; font-weight: 800; margin-top: 0.25rem;">0</h2>
           </div>
 
           <div style="margin: 1.5rem 0;">
             <span style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Diverted Electronic Mass</span>
-            <h2 id="homeTotalWeight" style="font-size: 2.2rem; font-weight: 800; color: var(--accent-green); margin-top: 0.25rem;">- kg</h2>
+            <h2 id="homeTotalWeight" style="font-size: 2.2rem; font-weight: 800; color: var(--accent-green); margin-top: 0.25rem;">0.0 kg</h2>
           </div>
 
           <div>
             <span style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Recycling Certified Ratio</span>
-            <h2 id="homeRecycledRate" style="font-size: 1.6rem; font-weight: 800; color: var(--accent-blue); margin-top: 0.25rem;">-%</h2>
+            <h2 id="homeRecycledRate" style="font-size: 1.6rem; font-weight: 800; color: var(--accent-blue); margin-top: 0.25rem;">0%</h2>
           </div>
         </div>
 
-        <div style="border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
+        <div style="border-top: 1px solid var(--border-subtle); padding-top: 1rem; margin-top: 1rem;">
           <span class="form-label-custom">Smart Contract Registry</span>
           <div class="mono-tag" style="font-size: 0.68rem; display: block; overflow: hidden; text-overflow: ellipsis;">
             0x5FbDB2315678afecb367f032d93F642f64180aa3
@@ -383,8 +383,11 @@
       </div>
     </div>
   </footer>
-<script src="config.js"></script>
+
+  <script src="config.js"></script>
   <script>
+    const BASE_URL = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : "http://127.0.0.1:5000";
+
     function quickTrack() {
       const id = document.getElementById('quickId').value.trim();
       if(id) {
@@ -395,10 +398,18 @@
     }
 
     async function loadHomepageData() {
+      const container = document.getElementById('recentTxContainer');
       try {
-        const res = await fetch(`${http://127.0.0.1:5000}/api/ewaste/all`);
+        const res = await fetch(`${BASE_URL}/api/ewaste/all`);
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
         const data = await res.json();
-        if(!data.success) return;
+        
+        if (!data.success || !Array.isArray(data.items)) {
+          container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No transactions recorded yet.</div>`;
+          return;
+        }
 
         const items = data.items;
         document.getElementById('homeTotalAssets').innerText = items.length;
@@ -408,7 +419,7 @@
 
         items.forEach(i => {
           weightSum += Number(i.weight || 0);
-          if(i.status === 'RECYCLED') recycledCount++;
+          if (i.status === 'RECYCLED') recycledCount++;
         });
 
         document.getElementById('homeTotalWeight').innerText = weightSum.toFixed(1) + " kg";
@@ -416,12 +427,11 @@
         const rate = items.length > 0 ? Math.round((recycledCount / items.length) * 100) : 0;
         document.getElementById('homeRecycledRate').innerText = `${rate}%`;
 
-        // Render recent 3 transactions
-        const container = document.getElementById('recentTxContainer');
+        // Render recent 4 transactions
         container.innerHTML = "";
-
         const recentItems = items.slice(-4).reverse();
-        if(recentItems.length === 0) {
+        
+        if (recentItems.length === 0) {
           container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No transactions recorded yet.</div>`;
           return;
         }
@@ -434,19 +444,28 @@
           row.style.padding = '0.85rem 0';
           row.style.borderBottom = '1px solid rgba(255, 255, 255, 0.04)';
 
-          const statusClass = item.status.toLowerCase().replace(/\s+/g, '');
-          const lastTx = item.transactionHashes ? item.transactionHashes[item.transactionHashes.length - 1] : null;
-          const hashDisplay = lastTx ? lastTx.hash.slice(0, 18) + '...' : 'Genesis Mined';
+          const currentStatus = item.status || 'REGISTERED';
+          const statusClass = currentStatus.toLowerCase().replace(/\s+/g, '');
+          
+          // Safe hash formatting whether stored as array of objects, array of strings, or single string
+          let hashDisplay = 'Genesis Mined';
+          if (Array.isArray(item.transactionHashes) && item.transactionHashes.length > 0) {
+            const lastEntry = item.transactionHashes[item.transactionHashes.length - 1];
+            const rawHash = (typeof lastEntry === 'object' && lastEntry !== null) ? lastEntry.hash : String(lastEntry);
+            if (rawHash) hashDisplay = rawHash.slice(0, 16) + '...';
+          } else if (item.txHash) {
+            hashDisplay = String(item.txHash).slice(0, 16) + '...';
+          }
 
           row.innerHTML = `
             <div style="display: flex; align-items: center; gap: 1rem;">
-              <span class="mono-tag" style="font-size: 0.78rem;">${item.ewasteId}</span>
-              <span style="font-size: 0.85rem; font-weight: 500;">${item.deviceType} (${item.weight} kg)</span>
+              <span class="mono-tag" style="font-size: 0.78rem;">${item.ewasteId || 'N/A'}</span>
+              <span style="font-size: 0.85rem; font-weight: 500;">${item.deviceType || 'Device'} (${item.weight || 0} kg)</span>
             </div>
             <div style="display: flex; align-items: center; gap: 1rem;">
-              <span class="status-badge ${statusClass}">${item.status}</span>
+              <span class="status-badge ${statusClass}">${currentStatus}</span>
               <span class="mono-tag" style="font-size: 0.7rem; color: var(--text-muted);">${hashDisplay}</span>
-              <a href="track.html?id=${item.ewasteId}" class="btn-verify" style="font-size: 0.72rem; padding: 0.3rem 0.65rem;">Audit &rarr;</a>
+              <a href="track.html?id=${encodeURIComponent(item.ewasteId)}" class="btn-verify" style="font-size: 0.72rem; padding: 0.3rem 0.65rem;">Audit &rarr;</a>
             </div>
           `;
           container.appendChild(row);
@@ -454,10 +473,12 @@
 
       } catch(err) {
         console.error("Home feed error:", err);
+        container.innerHTML = `<div style="text-align: center; color: #ef4444; padding: 1.5rem;">Could not load live chain feed. Ensure 'python app.py' is running on port 5000.</div>`;
       }
     }
 
-    loadHomepageData();
+    // Load data when page opens
+    window.addEventListener('DOMContentLoaded', loadHomepageData);
   </script>
 </body>
 </html>

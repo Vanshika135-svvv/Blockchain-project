@@ -14,6 +14,10 @@
       margin: 1.25rem 0;
       display: none;
     }
+    .btn-bento-action:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -48,7 +52,7 @@
         <!-- Search / Scan Bar -->
         <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
           <input type="text" id="targetId" class="form-control-custom" placeholder="Scan or enter Asset ID (e.g. EW-1793029669)">
-          <button class="btn-bento-action btn-action-blue" onclick="lookupDevice()" style="white-space: nowrap;">
+          <button id="btnQuery" class="btn-bento-action btn-action-blue" onclick="lookupDevice()" style="white-space: nowrap;">
             Query Asset 🔍
           </button>
         </div>
@@ -81,68 +85,107 @@
       </div>
     </div>
   </div>
-<script src="config.js"></script>
+
+  <script src="config.js"></script>
   <script>
+    const BASE_URL = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : "http://127.0.0.1:5000";
+
     async function lookupDevice() {
       const id = document.getElementById('targetId').value.trim();
-      if(!id) return alert("Please specify an Asset ID");
+      if (!id) return alert("Please specify an Asset ID");
 
       const card = document.getElementById('lookupCard');
+      const queryBtn = document.getElementById('btnQuery');
+      queryBtn.disabled = true;
+      queryBtn.innerText = "Querying...";
+
       try {
-        const res = await fetch(`${http://127.0.0.1:5000}/api/ewaste/${id}`);
+        const res = await fetch(`${BASE_URL}/api/ewaste/${encodeURIComponent(id)}`);
         const data = await res.json();
-        if(data.success) {
+
+        if (res.ok && data.success && data.item) {
           card.style.display = 'block';
-          document.getElementById('itemHeader').innerText = `${data.item.deviceType} (${data.item.ewasteId})`;
-          document.getElementById('itemOwner').innerText = data.item.ownerName;
-          document.getElementById('itemWeight').innerText = `${data.item.weight} kg`;
+          document.getElementById('itemHeader').innerText = `${data.item.deviceType || 'Device'} (${data.item.ewasteId})`;
+          document.getElementById('itemOwner').innerText = data.item.ownerName || "Unknown";
+          document.getElementById('itemWeight').innerText = `${data.item.weight || 0} kg`;
           document.getElementById('itemCondition').innerText = data.item.condition || "Not Specified";
           
+          const status = data.item.status || "REGISTERED";
           const badge = document.getElementById('itemStatusBadge');
-          badge.innerText = data.item.status;
-          badge.className = `status-badge ${data.item.status.toLowerCase().replace(/\s+/g, '')}`;
+          badge.innerText = status;
+          badge.className = `status-badge ${status.toLowerCase().replace(/\s+/g, '')}`;
         } else {
           card.style.display = 'none';
-          alert("Asset not found on chain or database.");
+          alert(data.error || "Asset not found on chain or database.");
         }
       } catch (err) {
-        alert("Server communication error. Is app.py active?");
+        console.error("Lookup error:", err);
+        alert("Server communication error. Is app.py running on port 5000?");
+      } finally {
+        queryBtn.disabled = false;
+        queryBtn.innerText = "Query Asset 🔍";
       }
     }
 
     async function commitStatus(newStatus) {
       const id = document.getElementById('targetId').value.trim();
-      if(!id) return alert("Please enter an Asset ID first");
+      if (!id) return alert("Please enter an Asset ID first");
 
       const resDiv = document.getElementById('statusRes');
+      const btnCollect = document.getElementById('btnCollect');
+      const btnTransit = document.getElementById('btnTransit');
+
+      // Set pending state
+      btnCollect.disabled = true;
+      btnTransit.disabled = true;
+
       resDiv.style.display = "block";
       resDiv.style.background = "rgba(255,255,255,0.03)";
       resDiv.style.color = "var(--text-main)";
       resDiv.innerText = `Broadcasting state change to '${newStatus}' to Ethereum network...`;
 
       try {
-const res = await fetch(`${http://127.0.0.1:5000}/api/ewaste/update`, {          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+        const res = await fetch(`${BASE_URL}/api/ewaste/update`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ewasteId: id, status: newStatus })
         });
+        
         const data = await res.json();
-        if(data.success) {
+        
+        if (res.ok && data.success) {
           resDiv.style.background = "rgba(16, 185, 129, 0.15)";
           resDiv.style.color = "var(--accent-green)";
           resDiv.innerHTML = `
             <strong>Success:</strong> Item state updated to <b>${newStatus}</b><br>
-            <span class="mono-tag" style="margin-top: 0.5rem; display: inline-block;">Tx: ${data.txHash}</span>
+            <span class="mono-tag" style="margin-top: 0.5rem; display: inline-block;">Tx: ${data.txHash || 'Mined On-Chain'}</span>
           `;
-          lookupDevice(); // Refresh specs
+          await lookupDevice(); // Refresh specs and status badge
         } else {
           resDiv.style.background = "rgba(239, 68, 68, 0.15)";
           resDiv.style.color = "#f87171";
-          resDiv.innerText = "Error: " + data.error;
+          resDiv.innerText = "Error: " + (data.error || "Transaction reverted by smart contract.");
         }
       } catch (err) {
-        resDiv.innerText = "Network failure while connecting to app.py.";
+        console.error("Update error:", err);
+        resDiv.style.background = "rgba(239, 68, 68, 0.15)";
+        resDiv.style.color = "#f87171";
+        resDiv.innerText = "Network failure while connecting to app.py. Please verify Flask is running.";
+      } finally {
+        btnCollect.disabled = false;
+        btnTransit.disabled = false;
       }
     }
+
+    // Auto-detect ?id= parameter if navigated from another page
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const urlId = params.get('id');
+      if (urlId) {
+        document.getElementById('targetId').value = urlId;
+        lookupDevice();
+      }
+    });
   </script>
 </body>
 </html>
