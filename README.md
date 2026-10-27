@@ -1,16 +1,16 @@
 # ♻ EcoChain: Blockchain-Based E-Waste Tracking & Verification
 
-An end-to-end decentralized e-waste lifecycle verification protocol that records custody transitions onto an immutable, verifiable ledger[cite: 4, 8].
+An end-to-end decentralized e-waste lifecycle verification protocol that records custody transitions onto an immutable, verifiable ledger.
 
 ---
 
 ## 📌 Features
 
-- **Decentralized State Transitions:** Smart contract enforcement ensuring irreversible custody updates (`REGISTERED` → `COLLECTED` → `IN TRANSIT` → `RECEIVED` → `RECYCLED`)[cite: 7, 8].
-- **Cryptographic QR Badges:** Dynamic Base64-encoded QR codes linking physical device tags to public on-chain audit histories[cite: 4, 8].
+- **Decentralized State Transitions:** Smart contract enforcement ensuring irreversible custody updates (`REGISTERED` → `COLLECTED` → `IN TRANSIT` → `RECEIVED` → `RECYCLED`).
+- **Cryptographic QR Badges:** Dynamic Base64-encoded QR codes linking physical device tags to public on-chain audit histories.
 - **ESG Carbon Offset Calculation:** Real-time formulaic calculation of avoided emissions computed at intake.
 - **Secondary Material Logging:** Recycler-level yield reporting for reclaimed precious metals, copper, and thermoplastics.
-- **Stakeholder Portals:** Dedicated interfaces for Consumers, Collection Hubs, Recyclers, and Public Auditing[cite: 8, 10].
+- **Stakeholder Portals:** Dedicated interfaces for Consumers, Collection Hubs, Recyclers, and Public Auditing.
 - **Bento Grid Interface:** High-scannability Web3 dashboard layout.
 
 ---
@@ -18,7 +18,7 @@ An end-to-end decentralized e-waste lifecycle verification protocol that records
 ## 🏗 Architecture & Tech Stack
 
 - **Blockchain Layer:** Ethereum Localhost Node (Hardhat v2.22.0, Chain ID: 31337)
-- **Smart Contract:** Solidity `0.8.28` (`EWasteTracker.sol` deployed at `0x5FbDB2315678afecb367f032d93F642f64180aa3`)
+- **Smart Contract:** Solidity `0.8.28` (`EWasteTracker.sol` deployed at `0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9`)
 - **Backend API:** Python 3.13, Flask, Web3.py, PyMongo, python-dotenv
 - **Database:** MongoDB Atlas (Cloud Cluster `ecochain`)
 - **Frontend Client:** HTML5, CSS3 (Bento Grid System), JavaScript
