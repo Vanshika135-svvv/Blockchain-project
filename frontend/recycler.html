@@ -54,7 +54,6 @@
         Authenticate device arrival, report secondary raw material yields, and execute final smart contract closure.
       </p>
 
-      <!-- Asset Input -->
       <div style="margin-bottom: 1.5rem;">
         <label class="form-label-custom">Target Asset Identifier</label>
         <div style="display: flex; gap: 0.75rem;">
@@ -65,7 +64,6 @@
         </div>
       </div>
 
-      <!-- Material Yield Formulation Bento Sub-Card -->
       <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
           <span class="form-label-custom" style="color: var(--accent-green); margin-bottom: 0;">Certified Secondary Raw Material Recovery</span>
@@ -88,12 +86,10 @@
         </div>
       </div>
 
-      <!-- Execution Button -->
       <button id="btnFinalize" class="btn-bento-action btn-action-green" onclick="finalizeRecycling()" style="width: 100%; padding: 1rem; font-size: 1rem;">
         Certify RECYCLED & Seal Cryptographic Chain ✓
       </button>
 
-      <!-- Results Card -->
       <div id="statusRes" style="display: none; padding: 1.25rem; border-radius: 10px; font-size: 0.85rem; margin-top: 1.25rem;"></div>
     </div>
   </div>
@@ -197,7 +193,6 @@
       }
     }
 
-    // Auto-fill Asset ID if passed in the URL (e.g. recycler.html?id=EW-...)
     window.addEventListener('DOMContentLoaded', () => {
       const params = new URLSearchParams(window.location.search);
       const urlId = params.get('id');

@@ -69,7 +69,6 @@
       </div>
     </div>
 
-    <!-- User Impact Bento Cards -->
     <div class="bento-grid" style="margin-bottom: 1.5rem;">
       <div class="bento-card" style="grid-column: span 4;">
         <span class="form-label-custom">My Registered Devices</span>
@@ -85,7 +84,6 @@
       </div>
     </div>
 
-    <!-- Submissions Table Card -->
     <div class="bento-card">
       <span class="form-label-custom" style="margin-bottom: 1rem;">My E-Waste Audit Trail</span>
       <div style="overflow-x: auto;">
@@ -111,7 +109,6 @@
   <script>
     const BASE_URL = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : "http://127.0.0.1:5000";
 
-    // Safe session extraction
     let currentUser = null;
     try {
       const userStr = localStorage.getItem('ecochain_user');

@@ -51,7 +51,6 @@
   </nav>
 
   <div class="bento-container" style="max-width: 900px;">
-    <!-- Manual Search Option -->
     <div class="bento-card" style="margin-bottom: 1.5rem;">
       <span class="form-label-custom">Verify Asset On-Chain</span>
       <form onsubmit="event.preventDefault(); manualSearch();" class="search-bar-wrap">
@@ -62,14 +61,11 @@
       </form>
     </div>
 
-    <!-- Status Loading Message -->
     <div id="loader" style="text-align: center; padding: 3rem 0; display: none;">
       <p style="color: var(--text-muted);">Querying Ethereum ledger roots...</p>
     </div>
 
-    <!-- Verification Details Bento -->
     <div id="trackContent" style="display: none;" class="bento-grid">
-      <!-- Overview Card -->
       <div class="bento-card" style="grid-column: span 12;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
           <div>
@@ -94,7 +90,6 @@
           </div>
         </div>
 
-        <!-- 5-Stage Stepper -->
         <span class="form-label-custom" style="margin-bottom: 1rem;">Chain of Custody Timeline</span>
         <div style="display: flex; justify-content: space-between; position: relative;">
           <div class="timeline-step">
@@ -120,7 +115,6 @@
         </div>
       </div>
 
-      <!-- Recovered Materials Card -->
       <div id="materialCard" class="bento-card" style="grid-column: span 12; display: none;">
         <span class="form-label-custom" style="color: var(--accent-green);">Certified Material Recovery Yields</span>
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 0.75rem;">
@@ -139,7 +133,6 @@
         </div>
       </div>
 
-      <!-- Blockchain Transactions List -->
       <div class="bento-card" style="grid-column: span 12;">
         <span class="form-label-custom">Cryptographic Proofs & Block Receipts</span>
         <div id="txList" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;"></div>
@@ -199,7 +192,6 @@
         badge.innerText = currentStatus;
         badge.className = `status-badge ${currentStatus.toLowerCase().replace(/\s+/g, "")}`;
 
-        // Reset and activate timeline dots
         const stages = ["REGISTERED", "COLLECTED", "IN TRANSIT", "RECEIVED", "RECYCLED"];
         const currIdx = stages.indexOf(currentStatus);
         const dots = ["dot-reg", "dot-col", "dot-trans", "dot-rec", "dot-fin"];
@@ -213,7 +205,6 @@
           }
         });
 
-        // Show recovered materials breakdown if present
         const matCard = document.getElementById('materialCard');
         if (item.recoveredMaterials) {
           matCard.style.display = 'block';
@@ -224,7 +215,6 @@
           matCard.style.display = 'none';
         }
 
-        // Render transaction hashes safely
         const txList = document.getElementById('txList');
         txList.innerHTML = "";
         

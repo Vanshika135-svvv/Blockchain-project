@@ -28,7 +28,6 @@
 
   <div class="bento-container" style="max-width: 950px;">
     <div class="bento-grid">
-      <!-- Input Bento Card -->
       <div class="bento-card" style="grid-column: span 7;">
         <span class="form-label-custom">Genesis Registration</span>
         <h1 style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.25rem;">
@@ -61,7 +60,6 @@
             </div>
           </div>
 
-          <!-- Carbon Offset Estimator Sub-Card -->
           <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
             <span style="font-size: 0.8rem; color: var(--accent-green);">Estimated Carbon Avoidance:</span>
             <strong id="carbonOffset" style="font-size: 0.95rem; color: var(--accent-green);">0.0 kg CO₂e</strong>
@@ -78,7 +76,6 @@
         </form>
       </div>
 
-      <!-- Generated QR & Receipt Bento Card -->
       <div class="bento-card" style="grid-column: span 5; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
         <div id="qrPlaceholder" style="padding: 2.5rem 0;">
           <div style="width: 80px; height: 80px; border: 2px dashed var(--border-subtle); border-radius: 14px; margin: 0 auto 1rem auto; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.85rem;">
@@ -116,7 +113,6 @@
   <script>
     const BASE_URL = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : "http://127.0.0.1:5000";
 
-    // Auto-fill logged in user's name if present in localStorage
     window.addEventListener('DOMContentLoaded', () => {
       try {
         const userStr = localStorage.getItem('ecochain_user');
@@ -167,7 +163,6 @@
           document.getElementById('receiptBox').style.display = 'block';
           document.getElementById('outId').innerText = data.item.ewasteId || 'N/A';
 
-          // Safe extraction of genesis transaction hash
           let genesisHash = "Genesis State Mined";
           if (Array.isArray(data.item.transactionHashes) && data.item.transactionHashes.length > 0) {
             const entry = data.item.transactionHashes[0];
@@ -177,7 +172,6 @@
           }
           document.getElementById('outHash').innerText = `Tx: ${genesisHash}`;
 
-          // Set QR image (or standard QR fallback)
           if (data.item.qrCodeDataURL) {
             document.getElementById('outQr').src = data.item.qrCodeDataURL;
           } else {
