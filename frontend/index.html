@@ -6,7 +6,6 @@
   <title>EcoChain | Decentralized E-Waste Protocol</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Homepage Specific Scaffolding */
     .hero-badge {
       display: inline-flex;
       align-items: center;
@@ -113,7 +112,6 @@
   </style>
 </head>
 <body>
-  <!-- Top Navigation Bar -->
   <nav class="navbar-custom">
     <a href="index.html" class="brand-title">
       <span class="brand-dot"></span>
@@ -129,7 +127,6 @@
   </nav>
 
   <div class="bento-container">
-    <!-- SECTION 1: HERO & AUDIT ENGINE -->
     <div class="bento-grid" style="margin-bottom: 2rem;">
       <div class="bento-card" style="grid-column: span 8; display: flex; flex-direction: column; justify-content: center;">
         <div>
@@ -143,7 +140,6 @@
             A decentralized, hybrid-architecture tracking protocol providing tamper-evident proof for every electronic device from user handoff to complete certified material reclamation.
           </p>
 
-          <!-- Direct Audit Quick Input -->
           <form onsubmit="event.preventDefault(); quickTrack();" style="display: flex; gap: 0.75rem; max-width: 580px;">
             <input type="text" id="quickId" class="form-control-custom" placeholder="Verify Asset ID (e.g. EW-1793029669)">
             <button type="submit" class="btn-bento-action btn-action-green" style="white-space: nowrap; padding: 0.85rem 1.4rem;">
@@ -153,7 +149,6 @@
         </div>
       </div>
 
-      <!-- Real-Time Protocol Metrics Card -->
       <div class="bento-card" style="grid-column: span 4; display: flex; flex-direction: column; justify-content: space-between;">
         <div>
           <span class="form-label-custom">Global Network Stats</span>
@@ -183,7 +178,6 @@
       </div>
     </div>
 
-    <!-- SECTION 2: ACCESS THE ACTOR PORTALS -->
     <div style="margin: 3.5rem 0 1.5rem 0;">
       <h2 class="section-title">Protocol Stakeholder Portals</h2>
       <p class="section-subtitle">Dedicated role-gated interfaces designed for seamless operational throughput without cryptographic friction.</p>
@@ -227,7 +221,6 @@
       </div>
     </div>
 
-    <!-- SECTION 3: PROTOCOL ARCHITECTURE & LIFECYCLE BREAKDOWN -->
     <div style="margin: 3.5rem 0 1.5rem 0;">
       <h2 class="section-title">Cryptographic Custody Lifecycle</h2>
       <p class="section-subtitle">Every state transition is notarized by smart contracts on Ethereum, preventing retroactive tampering.</p>
@@ -275,7 +268,6 @@
       </div>
     </div>
 
-    <!-- SECTION 4: ARCHITECTURAL COMPARISON (TRADITIONAL VS BLOCKCHAIN) -->
     <div style="margin: 3.5rem 0 1.5rem 0;">
       <h2 class="section-title">Why Decentralized Architecture Matters</h2>
       <p class="section-subtitle">Evaluating EcoChain against standard centralized scrap management databases.</p>
@@ -317,7 +309,6 @@
       </div>
     </div>
 
-    <!-- SECTION 5: LIVE RECENT TRANSACTIONS FEED -->
     <div style="margin: 3.5rem 0 1.5rem 0; display: flex; justify-content: space-between; align-items: flex-end;">
       <div>
         <h2 class="section-title">Live On-Chain Activity</h2>
@@ -335,7 +326,6 @@
     </div>
   </div>
 
-  <!-- COMPREHENSIVE PROTOCOL FOOTER -->
   <footer class="footer-custom">
     <div class="footer-grid">
       <div style="grid-column: span 5;">
@@ -427,7 +417,6 @@
         const rate = items.length > 0 ? Math.round((recycledCount / items.length) * 100) : 0;
         document.getElementById('homeRecycledRate').innerText = `${rate}%`;
 
-        // Render recent 4 transactions
         container.innerHTML = "";
         const recentItems = items.slice(-4).reverse();
         
@@ -447,7 +436,6 @@
           const currentStatus = item.status || 'REGISTERED';
           const statusClass = currentStatus.toLowerCase().replace(/\s+/g, '');
           
-          // Safe hash formatting whether stored as array of objects, array of strings, or single string
           let hashDisplay = 'Genesis Mined';
           if (Array.isArray(item.transactionHashes) && item.transactionHashes.length > 0) {
             const lastEntry = item.transactionHashes[item.transactionHashes.length - 1];
@@ -477,7 +465,6 @@
       }
     }
 
-    // Load data when page opens
     window.addEventListener('DOMContentLoaded', loadHomepageData);
   </script>
 </body>

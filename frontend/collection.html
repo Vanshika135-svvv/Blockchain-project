@@ -36,7 +36,6 @@
 
   <div class="bento-container" style="max-width: 900px;">
     <div class="bento-grid">
-      <!-- Main Intake Control Panel -->
       <div class="bento-card" style="grid-column: span 12;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem;">
           <div>
@@ -49,7 +48,6 @@
           Verify incoming physical hardware against on-chain records, assume legal custody, and seal transit logistics batches.
         </p>
 
-        <!-- Search / Scan Bar -->
         <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
           <input type="text" id="targetId" class="form-control-custom" placeholder="Scan or enter Asset ID (e.g. EW-1793029669)">
           <button id="btnQuery" class="btn-bento-action btn-action-blue" onclick="lookupDevice()" style="white-space: nowrap;">
@@ -57,7 +55,6 @@
           </button>
         </div>
 
-        <!-- Dynamic Device Pre-Verification Card -->
         <div id="lookupCard" class="lookup-card">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
             <strong id="itemHeader" style="font-size: 1rem;">-</strong>
@@ -70,7 +67,6 @@
           </div>
         </div>
 
-        <!-- Action Trigger Buttons -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
           <button id="btnCollect" class="btn-bento-action btn-action-amber" onclick="commitStatus('COLLECTED')" style="padding: 1rem;">
             Acknowledge Intake (COLLECTED)
@@ -80,7 +76,6 @@
           </button>
         </div>
 
-        <!-- Execution Feedback Box -->
         <div id="statusRes" style="display: none; padding: 1rem; border-radius: 10px; font-size: 0.85rem; margin-top: 1.25rem;"></div>
       </div>
     </div>
@@ -135,7 +130,6 @@
       const btnCollect = document.getElementById('btnCollect');
       const btnTransit = document.getElementById('btnTransit');
 
-      // Set pending state
       btnCollect.disabled = true;
       btnTransit.disabled = true;
 
@@ -160,7 +154,7 @@
             <strong>Success:</strong> Item state updated to <b>${newStatus}</b><br>
             <span class="mono-tag" style="margin-top: 0.5rem; display: inline-block;">Tx: ${data.txHash || 'Mined On-Chain'}</span>
           `;
-          await lookupDevice(); // Refresh specs and status badge
+          await lookupDevice();
         } else {
           resDiv.style.background = "rgba(239, 68, 68, 0.15)";
           resDiv.style.color = "#f87171";
@@ -177,7 +171,6 @@
       }
     }
 
-    // Auto-detect ?id= parameter if navigated from another page
     window.addEventListener('DOMContentLoaded', () => {
       const params = new URLSearchParams(window.location.search);
       const urlId = params.get('id');

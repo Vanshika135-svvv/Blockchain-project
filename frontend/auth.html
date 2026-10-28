@@ -20,7 +20,6 @@
 
   <div class="bento-container" style="max-width: 500px; margin-top: 3rem;">
     <div class="bento-card">
-      <!-- Toggle Tabs -->
       <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.03); padding: 4px; border-radius: 10px; border: 1px solid var(--border-subtle);">
         <button id="tabLogin" type="button" onclick="switchAuth(true)" class="btn-bento-action btn-action-green" style="flex: 1; padding: 0.6rem; font-size: 0.85rem;">Sign In</button>
         <button id="tabRegister" type="button" onclick="switchAuth(false)" class="nav-link-btn" style="flex: 1; text-align: center; font-size: 0.85rem; border: none; background: transparent; cursor: pointer;">Create Account</button>
@@ -54,7 +53,6 @@
 
   <script src="config.js"></script>
   <script>
-    // Fallback to local port 5000 if config.js doesn't define API_BASE_URL
     const BASE_URL = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : "http://127.0.0.1:5000";
     let isLogin = true;
 
@@ -115,7 +113,6 @@
       const url = `${BASE_URL}${endpoint}`;
       const payload = isLogin ? { email, password } : { name, email, password };
 
-      // Button loading state
       const originalBtnText = submitBtn.innerText;
       submitBtn.disabled = true;
       submitBtn.innerText = "Authenticating...";
@@ -134,7 +131,6 @@
           if (data.token) {
             localStorage.setItem('ecochain_token', data.token);
           }
-          // Redirect to user intake or dashboard
           window.location.href = 'user-dashboard.html';
         } else {
           alertBox.style.display = 'block';
