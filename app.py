@@ -19,13 +19,11 @@ try:
 except ImportError:
     CA_FILE = None
 
-# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-# ---------------- 1. AUTO-DISCOVERY MONGODB ATLAS CONNECTION ----------------
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://127.0.0.1:27017/")
 mongo_connected = False
 ewaste_collection = None
@@ -52,21 +50,18 @@ try:
     client = MongoClient(MONGO_URI, **mongo_kwargs)
     client.admin.command('ping')
 
-    # Detect all non-system databases
     all_dbs = [d for d in client.list_database_names() if d not in ['admin', 'local', 'config']]
     print(f"[*] Available databases in Atlas: {all_dbs}")
 
     target_db = None
     target_coll = None
 
-    # Priority 1: Check ecochain.ewaste
     if "ecochain" in all_dbs:
         db_candidate = client["ecochain"]
         if "ewaste" in db_candidate.list_collection_names() and db_candidate["ewaste"].count_documents({}) > 0:
             target_db = db_candidate
             target_coll = db_candidate["ewaste"]
 
-    # Priority 2: Scan other databases for non-empty collections containing ewaste data
     if target_coll is None:
         for db_name in all_dbs:
             cand_db = client[db_name]
@@ -82,7 +77,6 @@ try:
             if target_coll is not None:
                 break
 
-    # Priority 3: Fallback to ecochain database
     if target_db is None:
         target_db = client["ecochain"]
         target_coll = target_db["ewaste"]
@@ -99,7 +93,6 @@ except Exception as mongo_err:
     print("[!] Ensure: 1) IP 0.0.0.0/0 is whitelisted in Atlas Network Access. 2) Credentials in .env are correct.")
     mongo_connected = False
 
-# ---------------- 2. BLOCKCHAIN SETUP ----------------
 BLOCKCHAIN_RPC_URL = os.getenv("BLOCKCHAIN_RPC_URL", "http://127.0.0.1:8545")
 w3 = Web3(Web3.HTTPProvider(BLOCKCHAIN_RPC_URL))
 
@@ -258,7 +251,6 @@ except Exception as ce:
 
 
 def send_transaction(func_call):
-    """Executes on-chain transaction with explicit gas budget."""
     if not w3.is_connected() or not default_account or not contract:
         return f"0xsimulated{secrets.token_hex(28)}"
 
@@ -285,8 +277,6 @@ def send_transaction(func_call):
         print("[!] Contract Execution Error:", tx_err)
         return f"0xfailed{secrets.token_hex(28)}"
 
-
-# ---------------- 3. API ENDPOINTS ----------------
 
 @app.route('/api/ewaste/all', methods=['GET'])
 def get_all_ewaste():
@@ -608,6 +598,5 @@ def get_user_items():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-# ---------------- 4. SERVER RUNNER ----------------
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5000, debug=True, use_reloader=False)
