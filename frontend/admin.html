@@ -100,7 +100,6 @@
       </div>
     </div>
 
-    <!-- Bento Top Metrics -->
     <div class="bento-grid" style="margin-bottom: 1.5rem;">
       <div class="bento-card" style="grid-column: span 4;">
         <span class="form-label-custom">Total Registered Assets</span>
@@ -116,7 +115,6 @@
       </div>
     </div>
 
-    <!-- Registry & Search Bento -->
     <div class="bento-card">
       <div class="filter-bar">
         <div class="filter-input">
@@ -165,7 +163,6 @@
       const tbody = document.getElementById('tableBody');
 
       try {
-        // 1. Fetch all items for summary metrics
         const fullRes = await fetch(`${BACKEND_URL}/api/ewaste/all`);
         if (!fullRes.ok) {
           throw new Error(`HTTP error! status: ${fullRes.status}`);
@@ -192,7 +189,6 @@
           document.getElementById('totalRecycled').innerText = recycledCount;
         }
 
-        // 2. Fetch filtered results for the table
         const searchUrl = `${BACKEND_URL}/api/ewaste/search?q=${encodeURIComponent(q)}&status=${encodeURIComponent(selectedStatus)}`;
         const res = await fetch(searchUrl);
         if (!res.ok) {
@@ -248,7 +244,6 @@
       `;
     }
 
-    // Load data when page opens
     window.addEventListener('DOMContentLoaded', loadAdminData);
   </script>
 </body>
